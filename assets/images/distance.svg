@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <clipPath id="clip-distance">
+      <rect width="512" height="512"/>
+    </clipPath>
+  </defs>
+  <g id="distance" clip-path="url(#clip-distance)">
+    <path id="road" d="M489.394,489.394,390.59,0H268.636l3.738,112.832H217.019L220.757,0H98.8L0,489.394H204.553l4.663-140.877h70.962l4.663,140.877H489.394M278.778,306.374H210.616L216.108,140.4h57.177l5.492,165.972" transform="translate(11 11)" fill="#00ccb3"/>
+  </g>
+</svg>

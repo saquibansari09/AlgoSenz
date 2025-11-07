@@ -1,0 +1,160 @@
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+
+export default function TempScreen() {
+  const router = useRouter();
+  const { id, status } = useLocalSearchParams(); // status will be "Normal", "Low", "High" from Home
+  const [devices, setDevices] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchDevices = async () => {
+      setLoading(true);
+
+      try {
+        let url = '';
+
+        if (status) {
+          // Fetch temperature data based on the slice status
+          url = `https://algotrack.in/webapiAlgosenztemp/api/Login/GetTemperatureDataByStatus?companyId=${id}&status=${status}`;
+        } else {
+          // If no status, fetch all vehicles
+          url = `https://algotrack.in/webapiAlgosenztemp/api/Login/GetVehicleDataSummary?companyId=${id}`;
+        }
+
+        const response = await axios.get(url);
+        const data = response.data;
+
+        // Some APIs return array directly, some return object with allVehicles
+        setDevices(data.allVehicles || data);
+      } catch (error) {
+        console.error('Error fetching temperature data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDevices();
+  }, [id, status]);
+
+  if (loading) {
+    return (
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#FF5733" />
+        <Text style={{ marginTop: 10, fontSize: 16, color: '#333' }}>Loading temperature data...</Text>
+      </View>
+    );
+  }
+
+  const customVehicle = devices; // already filtered by status
+
+  return (
+    <View style={{ flex: 1 }}>
+      {/* 🔹 Header with Back Arrow and Title */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backIcon}>
+          <Ionicons name="arrow-back" size={24} color="#fff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Temperature</Text>
+      </View>
+
+      <ScrollView contentContainerStyle={{ padding: 15 }}>
+        {customVehicle?.map((item, index) => (
+          <View key={index} style={styles.card}>
+            <View style={styles.detailsCard}>
+              {/* Top row: Vehicle No + Date */}
+              <View style={styles.topRow}>
+                <Text style={styles.value}>{item.registrationNo || item.vehicleNo}</Text>
+                <Text style={styles.dateText}>{item.lastUpdated || item.gpsDateTime}</Text>
+              </View>
+
+              {/* Location */}
+              <Text style={styles.value}>{item.location}</Text>
+
+              <View style={styles.fullLine} />
+
+              {/* Temperature Sensor Table */}
+              <View>
+                <View style={[styles.row, styles.tableHeader]}>
+                  <Text style={[styles.cell, styles.headerCell]}>Sensor No.</Text>
+                  <Text style={[styles.cell, styles.headerCell]}>Temperature</Text>
+                  <Text style={[styles.cell, styles.headerCell]}>Humidity</Text>
+                </View>
+
+                {Array.from({ length: 4 }).map((_, i) => {
+                  const temp = item[`temp${i + 1}`];
+                  const humidity = item[`humidity${i + 1}`];
+
+                  if (temp === undefined || humidity === undefined) return null;
+
+                     // 🔹 Color logic humidity and temperaure
+                  let tempColor = '#3e98fa';
+                  if (temp >= 30) tempColor = 'orange';
+                  else if (temp >= 20) tempColor = 'green';
+
+                  let humidityColor = '#3e98fa';
+                  if (humidity >= 70) humidityColor = 'orange';
+                  else if (humidity >= 40) humidityColor = 'green';
+
+                  return (
+                     <View key={i} style={styles.row}>
+                      <Text style={styles.cell}>S{i + 1}</Text>
+                      <Text style={[styles.cell, { color: tempColor }]}>{temp}°C</Text>
+                      <Text style={[styles.cell, { color: humidityColor }]}>{humidity}%</Text>
+                    </View>
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        ))}
+
+        
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  loader: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' },
+
+  // 🔹 Header Style
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3e98fa',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+  },
+  backIcon: { marginRight: 10 },
+  headerTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
+
+  card: { backgroundColor: '#f8f8f8', borderRadius: 10, padding: 15, marginBottom: 10, elevation: 2 },
+  detailsCard: { backgroundColor: '#fff', borderRadius: 10, padding: 10, marginTop: 10, elevation: 3 },
+  fullLine: { height: 1, backgroundColor: '#ccc', width: '100%', marginVertical: 10 },
+
+  topRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  value: { fontSize: 12, fontWeight: '900', color: '#000' },
+  dateText: { fontSize: 12, fontWeight: 'bold', color: '#000' },
+
+  tableHeader: { backgroundColor: '#f2f2f2' },
+  row: { flexDirection: 'row', paddingVertical: 10, borderBottomWidth: 1, borderColor: '#ccc' },
+  cell: { flex: 1, textAlign: 'center', fontSize: 12, fontWeight: 'bold' },
+  headerCell: { fontWeight: 'bold', fontSize: 12 },
+
+  backButton: {
+    backgroundColor: '#FF5733',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    alignItems: 'center',
+    marginTop: 20,
+    alignSelf: 'center',
+  },
+  
+});
