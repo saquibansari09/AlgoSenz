@@ -1,46 +1,55 @@
 {
   "expo": {
-    "name": "front-ends",
-    "slug": "front-ends",
+    "name": "AlgoSenz",
+    "slug": "AlgoSenz",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "frontends",
+    "scheme": "algosenz",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "sdkVersion": "54.0.0",
-    "entryPoint": "expo-router/entry",   
+    "entryPoint": "expo-router/entry",
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "foregroundImage": "./assets/images/ic_launcher_foreground.png",
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "package": "com.anonymous.frontends"
+      "package": "com.algosenz.app"
     },
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/icon.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/1.jpg",
+          "image": "./assets/images/splash.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "@react-native-community/datetimepicker",
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "owner": "saquib25",
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "9084e253-dd02-4c4e-8ad7-2d5e28eb45d1"
+      }
     }
   }
 }

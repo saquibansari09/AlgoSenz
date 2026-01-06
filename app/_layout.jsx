@@ -9,10 +9,11 @@ import {
   ActivityIndicator,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter, Slot, useSegments } from "expo-router";
+import { useRouter, Slot, useSegments, usePathname } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import * as SplashScreen from "expo-splash-screen";
 import { Colors } from "../constants/Colors";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -22,11 +23,12 @@ export default function RootLayout() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isReportsModalOpen, setIsReportsModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("Home");
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const router = useRouter();
   const segments = useSegments();
+  const pathname = usePathname();
 
-  // ✅ Determine if current route is Login page
   const isLoginPage =
     segments.length === 0 || segments[0]?.toLowerCase() === "login";
 
@@ -43,47 +45,69 @@ export default function RootLayout() {
           onPress: async () => {
             await AsyncStorage.removeItem("userInfo");
             setIsLoggedIn(false);
+            setActiveTab("Home");
+            setRefreshKey((prev) => prev + 1);
             router.replace("/Login");
           },
         },
       ]);
     } else if (page === "Reports") {
+      setActiveTab("Reports");
       toggleReportsModal();
     } else if (page === "Account") {
-      toggleProfileModal();
       setActiveTab("Account");
+      toggleProfileModal();
     } else {
       setActiveTab(page);
       router.push(`/${page}`);
     }
   };
 
+  // 🔹 Initialize login status
   useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        const userInfoString = await AsyncStorage.getItem("userInfo");
-        const userInfo = userInfoString ? JSON.parse(userInfoString) : null;
-
-        if (userInfo?.userID) {
-          setIsLoggedIn(true);
-          if (isLoginPage) router.replace("/Home");
-        } else {
-          setIsLoggedIn(false);
-          if (!isLoginPage) router.replace("/Login");
+  const checkLoginStatus = async () => {
+    try {
+      const userInfoString = await AsyncStorage.getItem("userInfo");
+      const userInfo = userInfoString ? JSON.parse(userInfoString) : null;
+      if (userInfo?.userID) {
+        setIsLoggedIn(true);
+        if (isLoginPage) {
+          router.replace("/Home"); // go to Home if currently on Login page
         }
-      } catch (error) {
-        console.error("Login check failed:", error);
+      } else {
         setIsLoggedIn(false);
-        router.replace("/Login");
-      } finally {
-        setIsLoading(false);
-        await SplashScreen.hideAsync();
+        if (!isLoginPage) {
+          router.replace("/Login");
+        }
       }
-    };
+    } catch (error) {
+      console.error("Login check failed:", error);
+      setIsLoggedIn(false);
+      router.replace("/Login");
+    } finally {
+      setIsLoading(false);
+      await SplashScreen.hideAsync();
+    }
+  };
 
-    initializeApp();
-  }, [segments]);
+  // ✅ Run on mount AND whenever pathname changes (like after login)
+  checkLoginStatus();
+}, [pathname]);
 
+
+  // 🔹 Update activeTab on route change
+  useEffect(() => {
+    if (!pathname) return;
+
+    const path = pathname.replace("/", "").toLowerCase();
+
+    if (path.startsWith("home")) setActiveTab("Home");
+    else if (path.startsWith("reports")) setActiveTab("Reports");
+    else if (path.startsWith("account")) setActiveTab("Account");
+    else setActiveTab("Home"); 
+  }, [pathname]);
+
+  // 🔹 Wait until loading is finished
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -92,9 +116,9 @@ export default function RootLayout() {
     );
   }
 
-  // ✅ Only render login screen without header/tabs if not logged in
+  // 🔹 Show login page only if not logged in
   if (!isLoggedIn && isLoginPage) {
-    return <Slot />;
+    return <Slot key={refreshKey} />;
   }
 
   const tabs = [
@@ -105,9 +129,9 @@ export default function RootLayout() {
   ];
 
   return (
-    <View style={styles.container}>
-      {/* ✅ Header only visible after login */}
-      {isLoggedIn && !isLoginPage && (
+    <View style={styles.container} key={refreshKey}>
+      {/* Header */}
+      {isLoggedIn && (
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{activeTab}</Text>
           <TouchableOpacity onPress={toggleProfileModal}>
@@ -121,36 +145,36 @@ export default function RootLayout() {
         <Slot />
       </View>
 
-      {/* ✅ Bottom Tabs only visible after login */}
-      {isLoggedIn && !isLoginPage && (
-        <View style={styles.tabBar}>
-          {tabs.map((tab, index) => {
-            const isActive = activeTab === tab.name;
-            return (
-              <TouchableOpacity
-                key={index}
-                style={[styles.tabItem, isActive && styles.activeTab]}
-                onPress={() => handleNavigation(tab.name)}
-              >
-                <Ionicons
-                  name={tab.icon}
-                  size={24}
-                  color={isActive ? "red" : Colors.GRAY}
-
-
-                />
-                <Text
-                  style={[
-                    styles.tabLabel,
-                    { color: isActive ? "red" : Colors.GRAY },
-                  ]}
+      {/* Bottom Tabs */}
+      {isLoggedIn && (
+        <SafeAreaView edges={["bottom"]} style={styles.safeAreaTab}>
+          <View style={styles.tabBar}>
+            {tabs.map((tab, index) => {
+              const isActive = activeTab === tab.name;
+              return (
+                <TouchableOpacity
+                  key={index}
+                  style={[styles.tabItem, isActive && styles.activeTab]}
+                  onPress={() => handleNavigation(tab.name)}
                 >
-                  {tab.name}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+                  <Ionicons
+                    name={tab.icon}
+                    size={24}
+                    color={isActive ? "red" : Colors.GRAY}
+                  />
+                  <Text
+                    style={[
+                      styles.tabLabel,
+                      { color: isActive ? "red" : Colors.GRAY },
+                    ]}
+                  >
+                    {tab.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </SafeAreaView>
       )}
 
       {/* Profile Modal */}
@@ -252,7 +276,11 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: "#ddd",
     backgroundColor: "#fff",
+    paddingBottom: 10,
+    height: 70,
+    elevation: 10,
   },
+  safeAreaTab: { backgroundColor: "#fff" },
   tabItem: {
     flex: 1,
     justifyContent: "center",

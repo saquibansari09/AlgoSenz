@@ -17,7 +17,7 @@ export default function MySplashScreen() {
 
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/images/1.jpg')} style={styles.logo} />
+      <Image source={require('../assets/images/icon.png')} style={styles.logo} />
     </View>
   );
 }

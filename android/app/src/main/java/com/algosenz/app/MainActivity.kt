@@ -1,4 +1,4 @@
-package com.anonymous.frontends
+package com.algosenz.app
 import expo.modules.splashscreen.SplashScreenManager
 
 import android.os.Build

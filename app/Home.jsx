@@ -1,20 +1,18 @@
-import React, { useState, useEffect, useRef } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { useRouter } from "expo-router";
+import { useEffect, useRef, useState } from "react";
 import {
-  View,
+  Animated,
+  Image,
+  ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  Animated,
-  ScrollView,
-  Image,
+  View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
-import axios from "axios";
-import { PieChart } from "react-native-svg-charts";
-import { G, Text as SVGText } from "react-native-svg";
-import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
+import Svg, { Circle, G, Path, Text as SVGText } from "react-native-svg";
 
 const Home = () => {
   const router = useRouter();
@@ -26,106 +24,96 @@ const Home = () => {
   const tempOpacity = useRef(new Animated.Value(0)).current;
   const humOpacity = useRef(new Animated.Value(0)).current;
 
-  // ✅ Fetch all dashboard data dynamically based on logged-in user
-useEffect(() => {
-  const fetchAllData = async () => {
-    try {
-      // ✅ Load stored user info
-      const storedUser = await AsyncStorage.getItem("userInfo");
-      const parsedUser = storedUser ? JSON.parse(storedUser) : null;
+  useEffect(() => {
+    const fetchAllData = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem("userInfo");
+        const parsedUser = storedUser ? JSON.parse(storedUser) : null;
 
-      // ✅ Try multiple possible company ID keys for safety
-      const companyId =
-        parsedUser?.companyID ||
-        parsedUser?.CompanyID ||
-        parsedUser?.companyId ||
-        (await AsyncStorage.getItem("companyID"));
+        let companyId =
+          parsedUser?.companyID ||
+          parsedUser?.CompanyID ||
+          parsedUser?.companyId ||
+          (await AsyncStorage.getItem("companyID")) ||
+          (await AsyncStorage.getItem("companyId"));
 
-      if (!companyId) {
-        console.error("❌ No company ID found in stored user info");
-        return;
+        if (!companyId) {
+          console.error("❌ No company ID found in stored user info");
+          return;
+        }
+
+        const statsRes = await axios.get(
+          `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetAllCounts/${companyId}`
+        );
+        setVehicleStats(statsRes.data);
+
+        const tempRes = await axios.get(
+          `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetTemperatureCount/${companyId}`
+        );
+
+        const humRes = await axios.get(
+          `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetHumidityCount/${companyId}`
+        );
+
+        setTempData([
+          {
+            id: companyId,
+            key: 1,
+            value: tempRes.data.normalTemperatureCount || 0,
+            label: "Normal",
+            color: "#298e29ff",
+          },
+          {
+            id: companyId,
+            key: 2,
+            value: tempRes.data.lowTemperatureCount || 0,
+            label: "Low",
+            color: "#FFC000",
+          },
+          {
+            id: companyId,
+            key: 3,
+            value: tempRes.data.highTemperatureCount || 0,
+            label: "High",
+            color: "#de4343ff",
+          },
+        ]);
+
+        setHumData([
+          {
+            id: companyId,
+            key: 1,
+            status: "Normal",
+            value: humRes.data.normalHumidityCount || 0,
+            label: "Normal",
+            color: "#298e29ff",
+          },
+          {
+            id: companyId,
+            key: 2,
+            status: "Low",
+            value: humRes.data.lowHumidityCount || 0,
+            label: "Low",
+            color: "#FFC000",
+          },
+          {
+            id: companyId,
+            key: 3,
+            status: "High",
+            value: humRes.data.highHumidityCount || 0,
+            label: "High",
+            color: "#de4343ff",
+          },
+        ]);
+      } catch (error) {
+        console.error("Error fetching home data:", error);
       }
 
-      console.log("✅ Logged in Company ID:", companyId);
+    };
 
-      // ✅ Fetch Vehicle Stats
-      const statsRes = await axios.get(
-        `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetAllCounts/${companyId}`
-      );
-      setVehicleStats(statsRes.data);
+    fetchAllData();
+  }, []);
 
-      // ✅ Fetch Temperature Data
-      const tempRes = await axios.get(
-        `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetTemperatureCount/${companyId}`
-      );
-
-      // ✅ Fetch Humidity Data
-      const humRes = await axios.get(
-        `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetHumidityCount/${companyId}`
-      );
-
-      // ✅ Set Temperature Data
-      setTempData([
-        {
-          id: companyId,
-          key: 1,
-          value: tempRes.data.normalTemperatureCount || 0,
-          label: "Normal",
-          color: "#4CAF50",
-        },
-        {
-          id: companyId,
-          key: 2,
-          value: tempRes.data.lowTemperatureCount || 0,
-          label: "Low",
-          color: "#2196F3",
-        },
-        {
-          id: companyId,
-          key: 3,
-          value: tempRes.data.highTemperatureCount || 0,
-          label: "High",
-          color: "#FF9800",
-        },
-      ]);
-
-      // ✅ Set Humidity Data
-      setHumData([
-        {
-          id: companyId,
-          key: 1,
-          status: "Normal",
-          value: humRes.data.normalHumidityCount || 0,
-          label: "Normal",
-          color: "#4CAF50",
-        },
-        {
-          id: companyId,
-          key: 2,
-          status: "Low",
-          value: humRes.data.lowHumidityCount || 0,
-          label: "Low",
-          color: "#2196F3",
-        },
-        {
-          id: companyId,
-          key: 3,
-          status: "High",
-          value: humRes.data.highHumidityCount || 0,
-          label: "High",
-          color: "#FF9800",
-        },
-      ]);
-    } catch (error) {
-      console.error("❌ Error fetching home data:", error);
-    }
-  };
-
-  fetchAllData();
-}, []);
-
-
-  // Card data
   const cardData = [
     {
       title: "All Devices",
@@ -157,7 +145,97 @@ useEffect(() => {
     },
   ];
 
-  // Temperature slice selection
+  // --------- DONUT CHART HELPER ---------
+  // --------- DONUT CHART HELPER ---------
+const createDonut = (data, radius, onPress) => {
+  const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
+  const center = 110;
+
+  const visible = data.filter(i => i.value > 0);
+
+  // ⭐ If only 1 slice → draw full circle + label on EDGE
+  if (visible.length === 1) {
+    const item = visible[0];
+
+    const labelX = center;      // middle horizontally
+    const labelY = center - radius + 40; // ⭐ push label INTO slice
+
+    return (
+      <G>
+        <Circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill={item.color}
+          onPress={() => onPress(data.indexOf(item))}
+        />
+
+        {/* ⭐ label on slice (NOT in middle white circle) */}
+        <SVGText
+          x={labelX}
+          y={labelY}
+          fill="black"
+          fontSize="16"
+          fontWeight="bold"
+          textAnchor="middle"
+        >
+          {item.value}
+        </SVGText>
+      </G>
+    );
+  }
+
+  // ⭐ Multi slice logic
+  let startAngle = 0;
+  return data.map((item, index) => {
+    if (item.value === 0) return null;
+
+    const sliceAngle = (item.value / total) * 2 * Math.PI;
+    const endAngle = startAngle + sliceAngle;
+
+    const x1 = center + radius * Math.cos(startAngle);
+    const y1 = center + radius * Math.sin(startAngle);
+    const x2 = center + radius * Math.cos(endAngle);
+    const y2 = center + radius * Math.sin(endAngle);
+
+    const largeArc = sliceAngle > Math.PI ? 1 : 0;
+
+    const path = `
+      M ${center} ${center}
+      L ${x1} ${y1}
+      A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}
+      Z
+    `;
+
+    // ⭐ label inside slice (higher so white circle won't hide)
+    const midAngle = startAngle + sliceAngle / 2;
+    const labelX = center + (radius / 1.4) * Math.cos(midAngle);
+    const labelY = center + (radius / 1.4) * Math.sin(midAngle);
+
+    startAngle = endAngle;
+
+    return (
+      <G key={index}>
+        <Path d={path} fill={item.color} onPress={() => onPress(index)} />
+
+        {/* ⭐ label ALWAYS visible on slice */}
+        <SVGText
+          x={labelX}
+          y={labelY}
+          fill="black"
+          fontSize="14"
+          fontWeight="bold"
+          textAnchor="middle"
+        >
+          {item.value}
+        </SVGText>
+      </G>
+    );
+  });
+};
+
+
+
   const handleTempSelect = (index) => {
     const selectedItem = tempData[index];
     setSelectedTempSlice(index);
@@ -172,13 +250,6 @@ useEffect(() => {
     );
   };
 
-  const handleTempIconClick = () => {
-    if (tempData.length > 0) {
-      router.push(`/TempScreen?all=true&id=${tempData[0].id}`);
-    }
-  };
-
-  // Humidity slice selection
   const handleHumSelect = (index) => {
     const selectedItem = humData[index];
     setSelectedHumSlice(index);
@@ -193,31 +264,16 @@ useEffect(() => {
     );
   };
 
+  const handleTempIconClick = () => {
+    if (tempData.length > 0) {
+      router.push(`/TempScreen?all=true&id=${tempData[0].id}`);
+    }
+  };
+
   const handleHumIconClick = () => {
     if (humData.length > 0) {
       router.push(`/HumidityScreen?all=true&id=${humData[0].id}`);
     }
-  };
-
-  const Labels = ({ slices }) => {
-    return slices.map((slice, index) => {
-      const { labelCentroid, data } = slice;
-      return (
-        <G key={index}>
-          <SVGText
-            x={labelCentroid[0]}
-            y={labelCentroid[1]}
-            fill="black"
-            textAnchor="middle"
-            alignmentBaseline="middle"
-            fontSize={14}
-            fontWeight="bold"
-          >
-            {data.value}
-          </SVGText>
-        </G>
-      );
-    });
   };
 
   const renderLegend = (data) => (
@@ -247,7 +303,6 @@ useEffect(() => {
                   key={idx}
                   style={styles.smallCard}
                   onPress={() => router.push(`/DeviceTab/${card.tab}`)}
-
                   activeOpacity={0.8}
                 >
                   <Text style={styles.cardTitle}>{card.title}</Text>
@@ -264,33 +319,16 @@ useEffect(() => {
         {/* Temperature Chart */}
         <View style={{ alignItems: "center", marginVertical: 20 }}>
           <Text style={styles.donutHeading}>Temperature</Text>
-          <View style={{ position: "relative", height: 200, width: 320 }}>
-            <PieChart
-              style={{ height: 200, width: 320 }}
-              data={tempData.map((item, index) => ({
-                key: item.key,
-                value: item.value,
-                svg: { fill: item.color, onPress: () => handleTempSelect(index) },
-              }))}
-              innerRadius={100}
-              outerRadius="50%"
-              padAngle={0}
-              sort={() => null}
-            >
-              <Labels />
-            </PieChart>
-
-           <TouchableOpacity style={styles.centerIconContainer} onPress={handleTempIconClick}>
-  <Text style={styles.centerCount}>{totalTemp}</Text>
-  <Image
-    source={require("../assets/images/thermometer.png")} // 👈 correct path
-    style={styles.centerImage}
-    resizeMode="contain"
-  />
-</TouchableOpacity>
-
+          <View style={{ position: "relative", height: 220, width: 220 }}>
+            <Svg height={220} width={220}>
+              {createDonut(tempData, 100, handleTempSelect)}
+              <Circle cx={110} cy={110} r={45} fill="white" />
+            </Svg>
+            <TouchableOpacity style={styles.centerIconContainer} onPress={handleTempIconClick}>
+              <Text style={styles.centerCount}>{totalTemp}</Text>
+              <Image source={require("../assets/images/thermometer.png")} style={styles.centerImage} resizeMode="contain" />
+            </TouchableOpacity>
           </View>
-
           {selectedTempSlice !== null && (
             <Animated.Text style={[styles.selectedValueText, { opacity: tempOpacity }]}>
               {tempData[selectedTempSlice].label}: {tempData[selectedTempSlice].value}
@@ -302,32 +340,16 @@ useEffect(() => {
         {/* Humidity Chart */}
         <View style={{ alignItems: "center", marginVertical: 20 }}>
           <Text style={styles.donutHeading}>Humidity</Text>
-          <View style={{ position: "relative", height: 200, width: 320 }}>
-            <PieChart
-              style={{ height: 200, width: 320 }}
-              data={humData.map((item, index) => ({
-                key: item.key,
-                value: item.value,
-                svg: { fill: item.color, onPress: () => handleHumSelect(index) },
-              }))}
-              innerRadius={100}
-              outerRadius="50%"
-              padAngle={0}
-              sort={() => null}
-            >
-              <Labels />
-            </PieChart>
-
-            <TouchableOpacity style={styles.centerIconContainer} onPress={handleTempIconClick}>
-  <Text style={styles.centerCount}>{totalTemp}</Text>
-  <Image
-    source={require("../assets/images/smart-sensor.png")} // 👈 correct path
-    style={styles.centerImage}
-    resizeMode="contain"
-  />
-</TouchableOpacity>
+          <View style={{ position: "relative", height: 220, width: 220 }}>
+            <Svg height={220} width={220}>
+              {createDonut(humData, 100, handleHumSelect)}
+              <Circle cx={110} cy={110} r={45} fill="white" />
+            </Svg>
+            <TouchableOpacity style={styles.centerIconContainer} onPress={handleHumIconClick}>
+              <Text style={styles.centerCount}>{totalHum}</Text>
+              <Image source={require("../assets/images/smart-sensor.png")} style={styles.centerImage} resizeMode="contain" />
+            </TouchableOpacity>
           </View>
-
           {selectedHumSlice !== null && (
             <Animated.Text style={[styles.selectedValueText, { opacity: humOpacity }]}>
               {humData[selectedHumSlice].label}: {humData[selectedHumSlice].value}
@@ -354,25 +376,9 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: "row", alignItems: "center", marginRight: 15 },
   legendColor: { width: 15, height: 15, marginRight: 5, borderRadius: 10 },
   legendLabel: { fontSize: 14, color: "#333" },
-  centerIconContainer: {
-  position: "absolute",
-  top: "50%",
-  left: "50%",
-  transform: [{ translateX: -25 }, { translateY: -35 }],
-  alignItems: "center",
-  justifyContent: "center",
-},
-
-centerImage: {
-  width: 45,
-  height: 55,
-},
-
-centerCount: {
-  fontSize: 18,
-  fontWeight: "600",
-},
-
+  centerIconContainer: { position: "absolute", top: "50%", left: "50%", transform: [{ translateX: -25 }, { translateY: -35 }], alignItems: "center", justifyContent: "center" },
+  centerImage: { width: 45, height: 55 },
+  centerCount: { fontSize: 18, fontWeight: "600" },
 });
 
 export default Home;

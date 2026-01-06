@@ -77,28 +77,49 @@ export default function DeviceScreen() {
                   <Text style={[styles.cell, styles.headerCell]}>Humidity</Text>
                 </View>
 
-                {Array.from({ length: 4 }).map((_, i) => {
-                  const temp = item[`temp${i + 1}`];
-                  const humidity = item[`humidity${i + 1}`];
+               {[
+  {
+    sensorNo: 'S1',
+    installed: item.temp1InstalledFlag === 1,   // ⭐ ADDED
+    temp: item.temp1,
+    humidity: item.humidity1,
+  },
+  {
+    sensorNo: 'S2',
+    installed: item.temp2InstalledFlag === 1,   // ⭐ ADDED
+    temp: item.temp2,
+    humidity: item.humidity2,
+  },
+].map((sensor, i) => {
+  if (!sensor.installed) return null;            // ⭐ ADDED
 
-                  if (temp === undefined || humidity === undefined) return null;
+  const temp = sensor.temp;
+  const humidity = sensor.humidity;
+
 
                     // 🔹 Color logic Color logic humidity and temperaure
                   let tempColor = '#3e98fa';
                   if (temp >= 30) tempColor = 'orange';
                   else if (temp >= 20) tempColor = 'green';
 
-                  let humidityColor = '#3e98fa';
-                  if (humidity >= 70) humidityColor = 'orange';
-                  else if (humidity >= 40) humidityColor = 'green';
+                  let humidityColor = ''; // default < 75
+
+                  if (humidity >= 75 && humidity <= 95) {
+                    humidityColor = 'green';
+                  } else if (humidity > 95) {
+                    humidityColor = 'red';
+                  }else if(humidity < 75)
+                  {
+                    humidityColor = '#FFC000';
+                  }
 
 
                   return (
-                   <View key={i} style={styles.row}>
-                      <Text style={styles.cell}>S{i + 1}</Text>
-                      <Text style={[styles.cell, { color: tempColor }]}>{temp}°C</Text>
-                      <Text style={[styles.cell, { color: humidityColor }]}>{humidity}%</Text>
-                    </View>
+                  <View key={i} style={styles.row}>
+  <Text style={styles.cell}>{sensor.sensorNo}</Text>   
+  <Text style={[styles.cell, { color: tempColor }]}>{temp}°C</Text>
+  <Text style={[styles.cell, { color: humidityColor }]}>{humidity}%</Text>
+</View>
                   );
                 })}
               </View>

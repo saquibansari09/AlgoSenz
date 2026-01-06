@@ -1,8 +1,10 @@
 // metro.config.js
 
-const { getDefaultConfig } = require('@expo/metro-config');
+// metro.config.js
+const { getDefaultConfig } = require('expo/metro-config');
 
-module.exports = (async () => {
-  const config = await getDefaultConfig(__dirname);
-  return config;
-})();
+const config = getDefaultConfig(__dirname);
+
+config.resolver.assetExts.push('png'); // ✅ Ensure PNGs resolve properly
+
+module.exports = config;

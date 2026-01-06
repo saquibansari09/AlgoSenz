@@ -1,4 +1,4 @@
-package com.anonymous.frontends
+package com.algosenz.app
 
 import android.app.Application
 import android.content.res.Configuration
