@@ -1,18 +1,18 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  ScrollView,
-  TextInput,
-  Dimensions,
-} from "react-native";
-import { useLocalSearchParams } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
-import { Ionicons } from "@expo/vector-icons";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { LineChart } from "react-native-chart-kit";
 
 const screenWidth = Dimensions.get("window").width;
@@ -33,16 +33,40 @@ export default function DeviceTab() {
   const [activeMetric, setActiveMetric] = useState("temp1");
   const reversedChartData = [...chartData].reverse(); // 🔥 MUST
 
-  const getHumidityColor = (humidity) => {
-  if (typeof humidity !== "number") return "#000";
+  {
+    /* Temperatured color dynamic */
+  }
+  const getTemperatureColor = (temp, minTemp, maxTemp) => {
+    if (
+      typeof temp !== "number" ||
+      typeof minTemp !== "number" ||
+      typeof maxTemp !== "number"
+    ) {
+      return "#000"; // default black 14/01/2026
+    }
 
-  if (humidity > 95) return "red";        // 🔴 Critical
-  if (humidity >= 75) return "green";     // 🟢 Normal
-  return "#FFC000";                       // 🟡 Low
-};
+    if (temp < minTemp) return "#FFC000"; // 🔵 Low
+    if (temp > maxTemp) return "red"; // 🔴 High
+    return "green"; // 🟢 Normal
+  };
 
+  {
+    /* Humidity color dynamic */
+  }
+  const getHumidityColor = (humidity, minHumidity, maxHumidity) => {
+    if (
+      typeof humidity !== "number" ||
+      typeof minHumidity !== "number" ||
+      typeof maxHumidity !== "number"
+    ) {
+      return "#000";
+    }
 
-  
+    if (humidity < minHumidity) return "#FFC000"; // 🟡 LOW
+    if (humidity > maxHumidity) return "red"; // 🔴 HIGH
+    return "green"; // 🟢 NORMAL
+  };
+
   const escapeRegExp = (string = "") =>
     string.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
 
@@ -89,7 +113,7 @@ export default function DeviceTab() {
         }
 
         const response = await axios.get(
-          `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetVehicleDataSummary?companyId=${companyId}`
+          `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetVehicleDataSummary?companyId=${companyId}`,
         );
 
         const data = response.data || {};
@@ -97,67 +121,113 @@ export default function DeviceTab() {
         const reporting = data.reportingVehicles || [];
         const delayed = data.delayedVehicles || [];
 
-       const allDevices = allVehicles.map((item) => {
-  const regNo = item.registrationNo?.trim().toLowerCase();
-  let status = "Critical";
+        const allDevices = allVehicles.map((item) => {
+          const regNo = item.registrationNo?.trim().toLowerCase();
+          let status = "Critical";
 
-  if (
-    reporting.some(
-      (v) => v.registrationNo?.trim().toLowerCase() === regNo
-    )
-  ) {
-    status = "Reporting";
-  } else if (
-    delayed.some(
-      (v) => v.registrationNo?.trim().toLowerCase() === regNo
-    )
-  ) {
-    status = "Delayed";
-  }
+          if (
+            reporting.some(
+              (v) => v.registrationNo?.trim().toLowerCase() === regNo,
+            )
+          ) {
+            status = "Reporting";
+          } else if (
+            delayed.some(
+              (v) => v.registrationNo?.trim().toLowerCase() === regNo,
+            )
+          ) {
+            status = "Delayed";
+          }
 
-  // 🔹 Dynamic sensors array
-  const sensors = [];
+          // 🔹 Dynamic sensors array
+          const sensors = [];
 
-  // S1
-  if (item.temp1InstalledFlag === 1) {
-    sensors.push({
-      sensorNo: "S1",
-      temperature:
-        item.temp1 !== undefined && item.temp1 !== null ? +item.temp1 : "--",
-      humidity:
-        item.humidity1 !== undefined && item.humidity1 !== null
-          ? +item.humidity1
-          : "--",
-    });
-  }
+          // S1
+          if (item.temp1InstalledFlag === 1) {
+            sensors.push({
+              sensorNo: "S1",
 
-  // S2
-  if (item.temp2InstalledFlag === 1) {
-    sensors.push({
-      sensorNo: "S2",
-      temperature:
-        item.temp2 !== undefined && item.temp2 !== null ? +item.temp2 : "--",
-      humidity:
-        item.humidity2 !== undefined && item.humidity2 !== null
-          ? +item.humidity2
-          : "--",
-    });
-  }
+              temperature:
+                item.temp1 !== undefined && item.temp1 !== null
+                  ? +item.temp1
+                  : "--",
 
-  return {
-    deviceNumber: item.registrationNo || "",
-    location: item.location || "",
-    dateTime: item.gpsDateTime || item.lastUpdated || "",
-    sensors, // ✅ only installed sensors
-    status,
+              humidity:
+                item.humidity1 !== undefined && item.humidity1 !== null
+                  ? +item.humidity1
+                  : "--",
 
+              // 🌡 Temperature limits (dynamic)
+              minTemp:
+                item.minTemp !== undefined && item.minTemp !== null
+                  ? +item.minTemp
+                  : null,
+              maxTemp:
+                item.maxTemp !== undefined && item.maxTemp !== null
+                  ? +item.maxTemp
+                  : null,
 
-     // ✅ ADD THESE (if not already)
-    temp1InstalledFlag: item.temp1InstalledFlag,
-    temp2InstalledFlag: item.temp2InstalledFlag,
-  };
-});
+              // 💧 Humidity limits (dynamic)
+              minHumidity:
+                item.minHumidity !== undefined && item.minHumidity !== null
+                  ? +item.minHumidity
+                  : null,
+              maxHumidity:
+                item.maxHumidity !== undefined && item.maxHumidity !== null
+                  ? +item.maxHumidity
+                  : null,
+            });
+          }
 
+          // S2
+          if (item.temp2InstalledFlag === 1) {
+            sensors.push({
+              sensorNo: "S2",
+
+              temperature:
+                item.temp2 !== undefined && item.temp2 !== null
+                  ? +item.temp2
+                  : "--",
+
+              humidity:
+                item.humidity2 !== undefined && item.humidity2 !== null
+                  ? +item.humidity2
+                  : "--",
+
+              // 🌡 Temperature limits (dynamic)
+              minTemp:
+                item.minTemp !== undefined && item.minTemp !== null
+                  ? +item.minTemp
+                  : null,
+              maxTemp:
+                item.maxTemp !== undefined && item.maxTemp !== null
+                  ? +item.maxTemp
+                  : null,
+
+              // 💧 Humidity limits (dynamic)
+              minHumidity:
+                item.minHumidity !== undefined && item.minHumidity !== null
+                  ? +item.minHumidity
+                  : null,
+              maxHumidity:
+                item.maxHumidity !== undefined && item.maxHumidity !== null
+                  ? +item.maxHumidity
+                  : null,
+            });
+          }
+
+          return {
+            deviceNumber: item.registrationNo || "",
+            location: item.location || "",
+            dateTime: item.gpsDateTime || item.lastUpdated || "",
+            sensors, // ✅ only installed sensors
+            status,
+
+            // ✅ ADD THESE (if not already)
+            temp1InstalledFlag: item.temp1InstalledFlag,
+            temp2InstalledFlag: item.temp2InstalledFlag,
+          };
+        });
 
         if (mounted) setDevices(allDevices);
       } catch (error) {
@@ -193,7 +263,8 @@ export default function DeviceTab() {
 
       const formatDate = (d) => d.toISOString().split("T")[0];
 
-      const url = "https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetGraphReport";
+      const url =
+        "https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetGraphReport";
 
       const params = {
         registrationNo: registrationNo,
@@ -212,7 +283,7 @@ export default function DeviceTab() {
             humidity1: parseFloat(item.humidity1) || 0,
             humidity2: parseFloat(item.humidity2) || 0,
             label: item.gpsDateTime?.substring(11, 16) || `#${idx + 1}`,
-          }))
+          })),
         );
       } else {
         setChartData([]);
@@ -255,7 +326,10 @@ export default function DeviceTab() {
         {tabs.map((tabName) => (
           <TouchableOpacity
             key={tabName}
-            style={[styles.tabButton, activeTab === tabName && styles.activeTab]}
+            style={[
+              styles.tabButton,
+              activeTab === tabName && styles.activeTab,
+            ]}
             onPress={() => setActiveTab(tabName)}
           >
             <Text
@@ -272,7 +346,12 @@ export default function DeviceTab() {
 
       {/* Search Bar */}
       <View style={styles.topBar}>
-        <Ionicons name="search" size={20} color="#666" style={styles.searchIcon} />
+        <Ionicons
+          name="search"
+          size={20}
+          color="#666"
+          style={styles.searchIcon}
+        />
         <TextInput
           style={styles.searchInput}
           placeholder="Search Registration No"
@@ -294,12 +373,12 @@ export default function DeviceTab() {
                   item.status === "Reporting"
                     ? { borderLeftColor: "#00C853" }
                     : item.status === "Delayed"
-                    ? { borderLeftColor: "#FFB300" }
-                    : { borderLeftColor: "#D32F2F" },
+                      ? { borderLeftColor: "#FFB300" }
+                      : { borderLeftColor: "#D32F2F" },
                 ]}
                 onPress={() =>
                   setSelectedCardIndex(
-                    selectedCardIndex === index ? null : index
+                    selectedCardIndex === index ? null : index,
                   )
                 }
               >
@@ -344,16 +423,46 @@ export default function DeviceTab() {
                           key={data.sensorNo + idx}
                           style={[
                             styles.row,
-                            { backgroundColor: idx % 2 === 0 ? "#f9f9f9" : "#fff" },
+                            {
+                              backgroundColor:
+                                idx % 2 === 0 ? "#f9f9f9" : "#fff",
+                            },
                           ]}
                         >
                           <Text style={styles.cell}>{data.sensorNo}</Text>
-                          <Text style={[styles.cell, { color: "#ff5634" }]}>
+                          {/* Temperature */}
+                          <Text
+                            style={[
+                              styles.cell,
+                              {
+                                color: getTemperatureColor(
+                                  data.temperature,
+                                  data.minTemp,
+                                  data.maxTemp,
+                                ),
+                                fontWeight: "bold",
+                              },
+                            ]}
+                          >
                             {typeof data.temperature === "number"
                               ? `${data.temperature}°C`
                               : "--"}
                           </Text>
-                          <Text style={[styles.cell, { color: getHumidityColor(data.humidity) }]}>
+
+                          {/* Humidity */}
+                          <Text
+                            style={[
+                              styles.cell,
+                              {
+                                color: getHumidityColor(
+                                  data.humidity,
+                                  data.minHumidity,
+                                  data.maxHumidity,
+                                ),
+                                fontWeight: "bold",
+                              },
+                            ]}
+                          >
                             {typeof data.humidity === "number"
                               ? `${data.humidity}%`
                               : "--"}
@@ -368,127 +477,137 @@ export default function DeviceTab() {
               {/* Chart Section */}
               {selectedCardIndex === index && (
                 <View style={styles.chartContainer}>
-                 <Text style={styles.chartTitle}>
-  {activeMetric.includes("temp")
-    ? "Temperature Graph (°C)"
-    : "Humidity Graph (%)"}
-</Text>
-
+                  <Text style={styles.chartTitle}>
+                    {activeMetric.includes("temp")
+                      ? "Temperature Graph (°C)"
+                      : "Humidity Graph (%)"}
+                  </Text>
 
                   {/* Range Buttons */}
-                 {/* Range Buttons */}
-{/* Range Buttons */}
-<View style={styles.toggleRow}>
-  {ranges.map((range) => (
-    <TouchableOpacity
-      key={range}
-      style={[
-        styles.toggleButton, // same style as temp/hum buttons
-        selectedRange === range && { backgroundColor: "#3e98fa" }, // active color
-      ]}
-      onPress={() => setSelectedRange(range)}
-    >
-      <Text
-        style={[
-          styles.toggleText, // same text style
-          selectedRange === range && { fontWeight: "bold" },
-        ]}
-      >
-        {range.toUpperCase()}
-      </Text>
-    </TouchableOpacity>
-  ))}
-</View>
-
-
+                  <View style={styles.toggleRow}>
+                    {ranges.map((range) => (
+                      <TouchableOpacity
+                        key={range}
+                        style={[
+                          styles.toggleButton, // same style as temp/hum buttons
+                          selectedRange === range && {
+                            backgroundColor: "#3e98fa",
+                          }, // active color
+                        ]}
+                        onPress={() => setSelectedRange(range)}
+                      >
+                        <Text
+                          style={[
+                            styles.toggleText, // same text style
+                            selectedRange === range && { fontWeight: "bold" },
+                          ]}
+                        >
+                          {range.toUpperCase()}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
 
                   {/* Toggle Buttons */}
-                <View style={styles.toggleRow}>
-  {(() => {
-    const device = devices[selectedCardIndex];
+                  <View style={styles.toggleRow}>
+                    {(() => {
+                      const device = devices[selectedCardIndex];
 
-    const buttons = [];
+                      const buttons = [];
 
-    // 🔹 TEMP 1 & HUM 1
-    if (device?.temp1InstalledFlag === 1) {
-      buttons.push(
-        { key: "temp1", label: "TEMP 1", color: "#ff5634" },
-        { key: "humidity1", label: "HUM 1", color: "#00C853" }
-      );
-    }
+                      // 🔹 TEMP 1 & HUM 1
+                      if (device?.temp1InstalledFlag === 1) {
+                        buttons.push(
+                          { key: "temp1", label: "TEMP 1", color: "#ff5634" },
+                          {
+                            key: "humidity1",
+                            label: "HUM 1",
+                            color: "#00C853",
+                          },
+                        );
+                      }
 
-    // 🔹 TEMP 2 & HUM 2
-    if (device?.temp2InstalledFlag === 1) {
-      buttons.push(
-        { key: "temp2", label: "TEMP 2", color: "#4fc3f7" },
-        { key: "humidity2", label: "HUM 2", color: "#FFB300" }
-      );
-    }
+                      // 🔹 TEMP 2 & HUM 2
+                      if (device?.temp2InstalledFlag === 1) {
+                        buttons.push(
+                          { key: "temp2", label: "TEMP 2", color: "#4fc3f7" },
+                          {
+                            key: "humidity2",
+                            label: "HUM 2",
+                            color: "#FFB300",
+                          },
+                        );
+                      }
 
-    return buttons.map((item) => (
-      <TouchableOpacity
-        key={item.key}
-        style={[
-          styles.toggleButton,
-          activeMetric === item.key && { backgroundColor: item.color },
-        ]}
-        onPress={() => setActiveMetric(item.key)}
-      >
-        <Text style={styles.toggleText}>{item.label}</Text>
-      </TouchableOpacity>
-    ));
-  })()}
-</View>
-
+                      return buttons.map((item) => (
+                        <TouchableOpacity
+                          key={item.key}
+                          style={[
+                            styles.toggleButton,
+                            activeMetric === item.key && {
+                              backgroundColor: item.color,
+                            },
+                          ]}
+                          onPress={() => setActiveMetric(item.key)}
+                        >
+                          <Text style={styles.toggleText}>{item.label}</Text>
+                        </TouchableOpacity>
+                      ));
+                    })()}
+                  </View>
 
                   {chartLoading ? (
                     <ActivityIndicator color="#007AFF" size="small" />
                   ) : chartData.length === 0 ? (
-                    <Text style={{ color: "#000", textAlign: "center" }}>No Data</Text>
+                    <Text style={{ color: "#000", textAlign: "center" }}>
+                      No Data
+                    </Text>
                   ) : (
                     <ScrollView horizontal>
-  <LineChart
-  
-  data={{
-    // ✅ RIGHT → LEFT labels
-    labels: reversedChartData.map((d) => d.label),
+                      <LineChart
+                        data={{
+                          // ✅ RIGHT → LEFT labels
+                          labels: reversedChartData.map((d) => d.label),
 
-    datasets: [
-      {
-        // ✅ RIGHT → LEFT data
-        data: reversedChartData.map((d) => d[activeMetric]),
+                          datasets: [
+                            {
+                              // ✅ RIGHT → LEFT data
+                              data: reversedChartData.map(
+                                (d) => d[activeMetric],
+                              ),
 
-        // ✅ Color based on Temp / Humidity
-        color: () =>
-          activeMetric.includes("temp") ? "#ff5634" : "#00C853",
-      },
-    ],
-  }}
-  width={Math.max(reversedChartData.length * 50, screenWidth - 40)}
-  height={220}
-
-  // ✅ Unit shown correctly
-  yAxisSuffix={activeMetric.includes("temp") ? "°C" : "%"}
-
-  chartConfig={{
-    backgroundColor: "#fff",
-    backgroundGradientFrom: "#fff",
-    backgroundGradientTo: "#fff",
-    decimalPlaces: 1,
-    color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-    labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
-    propsForDots: {
-      r: "3",
-      strokeWidth: "1",
-      stroke: "#000",
-    },
-  }}
-  bezier
-  style={{ borderRadius: 8, marginVertical: 8 }}
-/>
-
-</ScrollView>
-
+                              // ✅ Color based on Temp / Humidity
+                              color: () =>
+                                activeMetric.includes("temp")
+                                  ? "#ff5634"
+                                  : "#00C853",
+                            },
+                          ],
+                        }}
+                        width={Math.max(
+                          reversedChartData.length * 50,
+                          screenWidth - 40,
+                        )}
+                        height={220}
+                        // ✅ Unit shown correctly
+                        yAxisSuffix={activeMetric.includes("temp") ? "°C" : "%"}
+                        chartConfig={{
+                          backgroundColor: "#fff",
+                          backgroundGradientFrom: "#fff",
+                          backgroundGradientTo: "#fff",
+                          decimalPlaces: 1,
+                          color: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+                          labelColor: (opacity = 1) => `rgba(0,0,0,${opacity})`,
+                          propsForDots: {
+                            r: "3",
+                            strokeWidth: "1",
+                            stroke: "#000",
+                          },
+                        }}
+                        bezier
+                        style={{ borderRadius: 8, marginVertical: 8 }}
+                      />
+                    </ScrollView>
                   )}
                 </View>
               )}
@@ -546,58 +665,70 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", paddingVertical: 4 },
   cell: { width: 100, textAlign: "center", fontSize: 12, color: "#000" },
   headerCell: { fontWeight: "bold", color: "#3e98fa" },
-  tableHeader: { backgroundColor: "#e3f2fd", borderTopLeftRadius: 5, borderTopRightRadius: 5 },
-  chartContainer: { marginTop: 10, backgroundColor: "#fff", borderRadius: 8, padding: 10 },
-  chartTitle: { 
-  color: "#000", 
-  fontWeight: "bold", 
-  textAlign: "left",   // ← Align heading to the start
-  marginBottom: 8,
-  fontSize: 14
-},
-  rangeContainer: { flexDirection: "row", justifyContent: "space-between", marginBottom: 10 },
-  rangeButton: { 
-  paddingVertical: 4, 
-  paddingHorizontal: 10, 
-  borderRadius: 8, 
-  backgroundColor: "#000", 
-  borderWidth: 1, 
-  borderColor: "#000" 
-},
-activeRangeButton: { 
-  backgroundColor: "#3e98fa", 
-  borderColor: "#3e98fa" 
-},
-rangeText: { 
-  color: "#fff", 
-  fontSize: 14 
-},
-activeRangeText: { 
-  fontWeight: "bold", 
-  color: "#fff" 
-},
+  tableHeader: {
+    backgroundColor: "#e3f2fd",
+    borderTopLeftRadius: 5,
+    borderTopRightRadius: 5,
+  },
+  chartContainer: {
+    marginTop: 10,
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    padding: 10,
+  },
+  chartTitle: {
+    color: "#000",
+    fontWeight: "bold",
+    textAlign: "left", // ← Align heading to the start
+    marginBottom: 8,
+    fontSize: 14,
+  },
+  rangeContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 10,
+  },
+  rangeButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    backgroundColor: "#000",
+    borderWidth: 1,
+    borderColor: "#000",
+  },
+  activeRangeButton: {
+    backgroundColor: "#3e98fa",
+    borderColor: "#3e98fa",
+  },
+  rangeText: {
+    color: "#fff",
+    fontSize: 14,
+  },
+  activeRangeText: {
+    fontWeight: "bold",
+    color: "#fff",
+  },
 
-  toggleRow: { 
-  flexDirection: "row", 
-  justifyContent: "flex-start", 
-  gap: 4,           // space between buttons
-  marginVertical: 5 
-},
-toggleButton: { 
-  width: 70,         // fixed width
-  paddingVertical: 6, 
-  borderRadius: 6, 
-  backgroundColor: "#000", 
-  borderWidth: 1, 
-  borderColor: "#000", 
-  alignItems: "center", 
-  justifyContent: "center" // centers text vertically
-},
-toggleText: { 
-  color: "#fff", 
-  fontSize: 12, 
-  fontWeight: "bold", 
-  textAlign: "center" 
-},
-
+  toggleRow: {
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    gap: 4, // space between buttons
+    marginVertical: 5,
+  },
+  toggleButton: {
+    width: 70, // fixed width
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: "#000",
+    borderWidth: 1,
+    borderColor: "#000",
+    alignItems: "center",
+    justifyContent: "center", // centers text vertically
+  },
+  toggleText: {
+    color: "#fff",
+    fontSize: 12,
+    fontWeight: "bold",
+    textAlign: "center",
+  },
 });

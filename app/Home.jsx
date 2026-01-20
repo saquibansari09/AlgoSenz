@@ -30,29 +30,29 @@ const Home = () => {
         const storedUser = await AsyncStorage.getItem("userInfo");
         const parsedUser = storedUser ? JSON.parse(storedUser) : null;
 
-        let companyId =
+        const companyId =
           parsedUser?.companyID ||
           parsedUser?.CompanyID ||
           parsedUser?.companyId ||
-          (await AsyncStorage.getItem("companyID")) ||
-          (await AsyncStorage.getItem("companyId"));
+          (await AsyncStorage.getItem("companyId")) ||
+          (await AsyncStorage.getItem("companyID"));
 
         if (!companyId) {
-          console.error("❌ No company ID found in stored user info");
-          return;
+          console.log("⏳ companyId not ready yet");
+          return; // ❌ no redirect, ❌ no crash
         }
 
         const statsRes = await axios.get(
-          `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetAllCounts/${companyId}`
+          `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetAllCounts/${companyId}`,
         );
         setVehicleStats(statsRes.data);
 
         const tempRes = await axios.get(
-          `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetTemperatureCount/${companyId}`
+          `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetTemperatureCount/${companyId}`,
         );
 
         const humRes = await axios.get(
-          `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetHumidityCount/${companyId}`
+          `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetHumidityCount/${companyId}`,
         );
 
         setTempData([
@@ -108,7 +108,6 @@ const Home = () => {
       } catch (error) {
         console.error("Error fetching home data:", error);
       }
-
     };
 
     fetchAllData();
@@ -147,94 +146,92 @@ const Home = () => {
 
   // --------- DONUT CHART HELPER ---------
   // --------- DONUT CHART HELPER ---------
-const createDonut = (data, radius, onPress) => {
-  const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
-  const center = 110;
+  const createDonut = (data, radius, onPress) => {
+    const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
+    const center = 110;
 
-  const visible = data.filter(i => i.value > 0);
+    const visible = data.filter((i) => i.value > 0);
 
-  // ⭐ If only 1 slice → draw full circle + label on EDGE
-  if (visible.length === 1) {
-    const item = visible[0];
+    // ⭐ If only 1 slice → draw full circle + label on EDGE
+    if (visible.length === 1) {
+      const item = visible[0];
 
-    const labelX = center;      // middle horizontally
-    const labelY = center - radius + 40; // ⭐ push label INTO slice
+      const labelX = center; // middle horizontally
+      const labelY = center - radius + 40; // ⭐ push label INTO slice
 
-    return (
-      <G>
-        <Circle
-          cx={center}
-          cy={center}
-          r={radius}
-          fill={item.color}
-          onPress={() => onPress(data.indexOf(item))}
-        />
+      return (
+        <G>
+          <Circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill={item.color}
+            onPress={() => onPress(data.indexOf(item))}
+          />
 
-        {/* ⭐ label on slice (NOT in middle white circle) */}
-        <SVGText
-          x={labelX}
-          y={labelY}
-          fill="black"
-          fontSize="16"
-          fontWeight="bold"
-          textAnchor="middle"
-        >
-          {item.value}
-        </SVGText>
-      </G>
-    );
-  }
+          {/* ⭐ label on slice (NOT in middle white circle) */}
+          <SVGText
+            x={labelX}
+            y={labelY}
+            fill="black"
+            fontSize="16"
+            fontWeight="bold"
+            textAnchor="middle"
+          >
+            {item.value}
+          </SVGText>
+        </G>
+      );
+    }
 
-  // ⭐ Multi slice logic
-  let startAngle = 0;
-  return data.map((item, index) => {
-    if (item.value === 0) return null;
+    // ⭐ Multi slice logic
+    let startAngle = 0;
+    return data.map((item, index) => {
+      if (item.value === 0) return null;
 
-    const sliceAngle = (item.value / total) * 2 * Math.PI;
-    const endAngle = startAngle + sliceAngle;
+      const sliceAngle = (item.value / total) * 2 * Math.PI;
+      const endAngle = startAngle + sliceAngle;
 
-    const x1 = center + radius * Math.cos(startAngle);
-    const y1 = center + radius * Math.sin(startAngle);
-    const x2 = center + radius * Math.cos(endAngle);
-    const y2 = center + radius * Math.sin(endAngle);
+      const x1 = center + radius * Math.cos(startAngle);
+      const y1 = center + radius * Math.sin(startAngle);
+      const x2 = center + radius * Math.cos(endAngle);
+      const y2 = center + radius * Math.sin(endAngle);
 
-    const largeArc = sliceAngle > Math.PI ? 1 : 0;
+      const largeArc = sliceAngle > Math.PI ? 1 : 0;
 
-    const path = `
+      const path = `
       M ${center} ${center}
       L ${x1} ${y1}
       A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}
       Z
     `;
 
-    // ⭐ label inside slice (higher so white circle won't hide)
-    const midAngle = startAngle + sliceAngle / 2;
-    const labelX = center + (radius / 1.4) * Math.cos(midAngle);
-    const labelY = center + (radius / 1.4) * Math.sin(midAngle);
+      // ⭐ label inside slice (higher so white circle won't hide)
+      const midAngle = startAngle + sliceAngle / 2;
+      const labelX = center + (radius / 1.4) * Math.cos(midAngle);
+      const labelY = center + (radius / 1.4) * Math.sin(midAngle);
 
-    startAngle = endAngle;
+      startAngle = endAngle;
 
-    return (
-      <G key={index}>
-        <Path d={path} fill={item.color} onPress={() => onPress(index)} />
+      return (
+        <G key={index}>
+          <Path d={path} fill={item.color} onPress={() => onPress(index)} />
 
-        {/* ⭐ label ALWAYS visible on slice */}
-        <SVGText
-          x={labelX}
-          y={labelY}
-          fill="black"
-          fontSize="14"
-          fontWeight="bold"
-          textAnchor="middle"
-        >
-          {item.value}
-        </SVGText>
-      </G>
-    );
-  });
-};
-
-
+          {/* ⭐ label ALWAYS visible on slice */}
+          <SVGText
+            x={labelX}
+            y={labelY}
+            fill="black"
+            fontSize="14"
+            fontWeight="bold"
+            textAnchor="middle"
+          >
+            {item.value}
+          </SVGText>
+        </G>
+      );
+    });
+  };
 
   const handleTempSelect = (index) => {
     const selectedItem = tempData[index];
@@ -246,7 +243,7 @@ const createDonut = (data, radius, onPress) => {
       useNativeDriver: true,
     }).start();
     router.push(
-      `/TempScreen?id=${selectedItem.id}&label=${selectedItem.label}&value=${selectedItem.value}&status=${selectedItem.label}`
+      `/TempScreen?id=${selectedItem.id}&label=${selectedItem.label}&value=${selectedItem.value}&status=${selectedItem.label}`,
     );
   };
 
@@ -260,7 +257,7 @@ const createDonut = (data, radius, onPress) => {
       useNativeDriver: true,
     }).start();
     router.push(
-      `/HumidityScreen?id=${selectedItem.id}&label=${selectedItem.label}&value=${selectedItem.value}&status=${selectedItem.status}`
+      `/HumidityScreen?id=${selectedItem.id}&label=${selectedItem.label}&value=${selectedItem.value}&status=${selectedItem.status}`,
     );
   };
 
@@ -288,33 +285,43 @@ const createDonut = (data, radius, onPress) => {
   );
 
   const totalTemp = tempData.reduce((sum, item) => sum + item.value, 0);
-  const totalHum = humData.reduce((sum, item) => sum + Number(item.value || 0), 0);
+  const totalHum = humData.reduce(
+    (sum, item) => sum + Number(item.value || 0),
+    0,
+  );
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Cards */}
-        {Array.from({ length: Math.ceil(cardData.length / 2) }).map((_, rowIndex) => {
-          const rowCards = cardData.slice(rowIndex * 2, rowIndex * 2 + 2);
-          return (
-            <View key={rowIndex} style={styles.cardRow}>
-              {rowCards.map((card, idx) => (
-                <TouchableOpacity
-                  key={idx}
-                  style={styles.smallCard}
-                  onPress={() => router.push(`/DeviceTab/${card.tab}`)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.cardTitle}>{card.title}</Text>
-                  <View style={styles.cardContent}>
-                    <Text style={[styles.cardValue, { color: card.color }]}>{card.value}</Text>
-                    <Ionicons name={card.icon} size={28} color={card.color} />
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </View>
-          );
-        })}
+        {Array.from({ length: Math.ceil(cardData.length / 2) }).map(
+          (_, rowIndex) => {
+            const rowCards = cardData.slice(rowIndex * 2, rowIndex * 2 + 2);
+            return (
+              <View key={rowIndex} style={styles.cardRow}>
+                {rowCards.map((card, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={styles.smallCard}
+                    onPress={() => router.push(`/DeviceTab/${card.tab}`)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.cardTitle}>{card.title}</Text>
+                    <View style={styles.cardContent}>
+                      <Text style={[styles.cardValue, { color: card.color }]}>
+                        {card.value}
+                      </Text>
+                      <Ionicons name={card.icon} size={28} color={card.color} />
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            );
+          },
+        )}
 
         {/* Temperature Chart */}
         <View style={{ alignItems: "center", marginVertical: 20 }}>
@@ -324,14 +331,24 @@ const createDonut = (data, radius, onPress) => {
               {createDonut(tempData, 100, handleTempSelect)}
               <Circle cx={110} cy={110} r={45} fill="white" />
             </Svg>
-            <TouchableOpacity style={styles.centerIconContainer} onPress={handleTempIconClick}>
+            <TouchableOpacity
+              style={styles.centerIconContainer}
+              onPress={handleTempIconClick}
+            >
               <Text style={styles.centerCount}>{totalTemp}</Text>
-              <Image source={require("../assets/images/thermometer.png")} style={styles.centerImage} resizeMode="contain" />
+              <Image
+                source={require("../assets/images/thermometer.png")}
+                style={styles.centerImage}
+                resizeMode="contain"
+              />
             </TouchableOpacity>
           </View>
           {selectedTempSlice !== null && (
-            <Animated.Text style={[styles.selectedValueText, { opacity: tempOpacity }]}>
-              {tempData[selectedTempSlice].label}: {tempData[selectedTempSlice].value}
+            <Animated.Text
+              style={[styles.selectedValueText, { opacity: tempOpacity }]}
+            >
+              {tempData[selectedTempSlice].label}:{" "}
+              {tempData[selectedTempSlice].value}
             </Animated.Text>
           )}
           {renderLegend(tempData)}
@@ -345,14 +362,24 @@ const createDonut = (data, radius, onPress) => {
               {createDonut(humData, 100, handleHumSelect)}
               <Circle cx={110} cy={110} r={45} fill="white" />
             </Svg>
-            <TouchableOpacity style={styles.centerIconContainer} onPress={handleHumIconClick}>
+            <TouchableOpacity
+              style={styles.centerIconContainer}
+              onPress={handleHumIconClick}
+            >
               <Text style={styles.centerCount}>{totalHum}</Text>
-              <Image source={require("../assets/images/smart-sensor.png")} style={styles.centerImage} resizeMode="contain" />
+              <Image
+                source={require("../assets/images/smart-sensor.png")}
+                style={styles.centerImage}
+                resizeMode="contain"
+              />
             </TouchableOpacity>
           </View>
           {selectedHumSlice !== null && (
-            <Animated.Text style={[styles.selectedValueText, { opacity: humOpacity }]}>
-              {humData[selectedHumSlice].label}: {humData[selectedHumSlice].value}
+            <Animated.Text
+              style={[styles.selectedValueText, { opacity: humOpacity }]}
+            >
+              {humData[selectedHumSlice].label}:{" "}
+              {humData[selectedHumSlice].value}
             </Animated.Text>
           )}
           {renderLegend(humData)}
@@ -365,18 +392,51 @@ const createDonut = (data, radius, onPress) => {
 const styles = StyleSheet.create({
   container: { flex: 1, marginTop: 20 },
   scrollContainer: { padding: 16, paddingBottom: 100 },
-  cardRow: { flexDirection: "row", justifyContent: "space-between", marginBottom: 16 },
-  smallCard: { backgroundColor: "#fff", borderRadius: 10, padding: 12, elevation: 4, width: "48%" },
+  cardRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  smallCard: {
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    padding: 12,
+    elevation: 4,
+    width: "48%",
+  },
   cardTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 8 },
-  cardContent: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+  cardContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
   cardValue: { fontSize: 14, fontWeight: "600" },
-  donutHeading: { fontSize: 18, fontWeight: "bold", color: "#333", marginBottom: 10, alignSelf: "flex-start", marginLeft: 5 },
-  selectedValueText: { fontSize: 16, fontWeight: "bold", color: "#333", marginTop: 10 },
+  donutHeading: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+    marginBottom: 10,
+    alignSelf: "flex-start",
+    marginLeft: 5,
+  },
+  selectedValueText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#333",
+    marginTop: 10,
+  },
   legendContainer: { flexDirection: "row", marginTop: 10 },
   legendItem: { flexDirection: "row", alignItems: "center", marginRight: 15 },
   legendColor: { width: 15, height: 15, marginRight: 5, borderRadius: 10 },
   legendLabel: { fontSize: 14, color: "#333" },
-  centerIconContainer: { position: "absolute", top: "50%", left: "50%", transform: [{ translateX: -25 }, { translateY: -35 }], alignItems: "center", justifyContent: "center" },
+  centerIconContainer: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: [{ translateX: -25 }, { translateY: -35 }],
+    alignItems: "center",
+    justifyContent: "center",
+  },
   centerImage: { width: 45, height: 55 },
   centerCount: { fontSize: 18, fontWeight: "600" },
 });
