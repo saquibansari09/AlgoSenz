@@ -45,7 +45,7 @@ export default function DeviceTab() {
       return "#000"; // default black 14/01/2026
     }
 
-    if (temp < minTemp) return "#FFC000"; // 🔵 Low
+    if (temp < minTemp) return "#FFC000"; // orange
     if (temp > maxTemp) return "red"; // 🔴 High
     return "green"; // 🟢 Normal
   };

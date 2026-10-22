@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "AlgoSenz",
+    "name": "AlgoSenzz",
     "slug": "AlgoSenz",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -24,14 +24,14 @@
     "web": {
       "bundler": "metro",
       "output": "static",
-      "favicon": "./assets/images/icon.png"
+      "favicon": "./assets/images/Logo.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash.png",
+          "image": "./assets/images/Logo.png",
           "imageWidth": 200,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"

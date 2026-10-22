@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  Modal,
-  Alert,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useRouter, Slot, useSegments, usePathname } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Slot, usePathname, useRouter, useSegments } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
-import { Colors } from "../constants/Colors";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { Colors } from "../constants/Colors";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -65,35 +65,34 @@ export default function RootLayout() {
 
   // 🔹 Initialize login status
   useEffect(() => {
-  const checkLoginStatus = async () => {
-    try {
-      const userInfoString = await AsyncStorage.getItem("userInfo");
-      const userInfo = userInfoString ? JSON.parse(userInfoString) : null;
-      if (userInfo?.userID) {
-        setIsLoggedIn(true);
-        if (isLoginPage) {
-          router.replace("/Home"); // go to Home if currently on Login page
+    const checkLoginStatus = async () => {
+      try {
+        const userInfoString = await AsyncStorage.getItem("userInfo");
+        const userInfo = userInfoString ? JSON.parse(userInfoString) : null;
+        if (userInfo?.userID) {
+          setIsLoggedIn(true);
+          if (isLoginPage) {
+            router.replace("/Home"); // go to Home if currently on Login page
+          }
+        } else {
+          setIsLoggedIn(false);
+          if (!isLoginPage) {
+            router.replace("/Login");
+          }
         }
-      } else {
+      } catch (error) {
+        console.error("Login check failed:", error);
         setIsLoggedIn(false);
-        if (!isLoginPage) {
-          router.replace("/Login");
-        }
+        router.replace("/Login");
+      } finally {
+        setIsLoading(false);
+        await SplashScreen.hideAsync();
       }
-    } catch (error) {
-      console.error("Login check failed:", error);
-      setIsLoggedIn(false);
-      router.replace("/Login");
-    } finally {
-      setIsLoading(false);
-      await SplashScreen.hideAsync();
-    }
-  };
+    };
 
-  // ✅ Run on mount AND whenever pathname changes (like after login)
-  checkLoginStatus();
-}, [pathname]);
-
+    // ✅ Run on mount AND whenever pathname changes (like after login)
+    checkLoginStatus();
+  }, [pathname]);
 
   // 🔹 Update activeTab on route change
   useEffect(() => {
@@ -104,7 +103,7 @@ export default function RootLayout() {
     if (path.startsWith("home")) setActiveTab("Home");
     else if (path.startsWith("reports")) setActiveTab("Reports");
     else if (path.startsWith("account")) setActiveTab("Account");
-    else setActiveTab("Home"); 
+    else setActiveTab("Home");
   }, [pathname]);
 
   // 🔹 Wait until loading is finished

@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
-import { View, Image, StyleSheet } from 'react-native';
-import * as SplashScreen from 'expo-splash-screen';
-import { useRouter } from 'expo-router';
+import { useRouter } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
+import { Image, StyleSheet, View } from "react-native";
 
 SplashScreen.preventAutoHideAsync(); // Prevent auto hide until ready
 
@@ -11,13 +11,16 @@ export default function MySplashScreen() {
   useEffect(() => {
     setTimeout(async () => {
       await SplashScreen.hideAsync(); // Hide splash
-      router.replace('/login'); // Navigate to Login
+      router.replace("/login"); // Navigate to Login
     }, 2000); // Show splash for 2 seconds
   }, []);
 
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/images/icon.png')} style={styles.logo} />
+      <Image
+        source={require("../assets/images/Logo.png")}
+        style={styles.logo}
+      />
     </View>
   );
 }
@@ -25,13 +28,13 @@ export default function MySplashScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#ffffff",
+    justifyContent: "center",
+    alignItems: "center",
   },
   logo: {
     width: 200,
     height: 200,
-    resizeMode: 'contain',
+    resizeMode: "contain",
   },
 });

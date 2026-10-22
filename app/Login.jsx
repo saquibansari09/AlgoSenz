@@ -6,6 +6,7 @@ import { useState } from "react";
 import {
   Alert,
   Image,
+  ImageBackground,
   ScrollView,
   StyleSheet,
   Text,
@@ -66,12 +67,10 @@ function LoginScreen() {
         return;
       }
 
-      // ⭐⭐⭐ FIXED PART
       await AsyncStorage.removeItem("companyId");
       await AsyncStorage.setItem("companyId", String(companyId));
       console.log("✅ SAVED companyId:", companyId);
 
-      // ⭐⭐⭐ SMALL DELAY (Expo Router fix)
       await new Promise((resolve) => setTimeout(resolve, 300));
 
       Alert.alert("Login Successful", `Welcome ${resp.companyName || ""}`);
@@ -82,73 +81,94 @@ function LoginScreen() {
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={{ flexGrow: 1 }}
-      showsVerticalScrollIndicator={false}
+    <ImageBackground
+      source={require("../assets/images/background.png")}
+      style={styles.backgroundImage}
+      resizeMode="cover"
     >
-      <View style={styles.container}>
-        <View style={styles.innerBox}>
-          {/* LOGO */}
-          <Image
-            source={require("../assets/images/icon.png")}
-            style={styles.logo}
-          />
-
-          {/* APP NAME */}
-          <Text style={styles.appName}>ALGOSENZ</Text>
-
-          {/* TITLE */}
-          <Text style={styles.title}>
-            Realtime solution to your tracking needs
-          </Text>
-
-          {/* SUBTITLE */}
-          <Text style={styles.subtitle}>Temperature and Humidity</Text>
-
-          {/* USERNAME */}
-          <TextInput
-            style={styles.input}
-            placeholder="Username"
-            placeholderTextColor="#555"
-            value={username}
-            onChangeText={setUsername}
-          />
-
-          {/* PASSWORD */}
-          <View style={styles.passwordContainer}>
-            <TextInput
-              style={styles.passwordInput}
-              placeholder="Password"
-              placeholderTextColor="#555"
-              secureTextEntry={!showPassword}
-              value={password}
-              onChangeText={setPassword}
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.container}>
+          <View style={styles.innerBox}>
+            {/* LOGO */}
+            <Image
+              source={require("../assets/images/Logo.png")}
+              style={styles.logo}
             />
-            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+
+            {/* TITLE */}
+            <Text style={styles.title}>Cold-Chain IoT & Automation</Text>
+
+            {/* SUBTITLE */}
+            <Text style={styles.subtitle}>Temperature & Rh Monitoring</Text>
+
+            {/* USERNAME WITH ICON */}
+            <View style={styles.inputContainer}>
               <Ionicons
-                name={showPassword ? "eye-off" : "eye"}
-                size={22}
+                name="person-outline"
+                size={20}
                 color="#666"
+                style={styles.inputIcon}
               />
+              <TextInput
+                style={styles.inputField}
+                placeholder="Username"
+                placeholderTextColor="#555"
+                value={username}
+                onChangeText={setUsername}
+                autoCapitalize="none"
+              />
+            </View>
+
+            {/* PASSWORD WITH ICON */}
+            <View style={styles.inputContainer}>
+              <Ionicons
+                name="lock-closed-outline"
+                size={20}
+                color="#666"
+                style={styles.inputIcon}
+              />
+              <TextInput
+                style={styles.passwordInput}
+                placeholder="Password"
+                placeholderTextColor="#555"
+                secureTextEntry={!showPassword}
+                value={password}
+                onChangeText={setPassword}
+              />
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={22}
+                  color="#666"
+                />
+              </TouchableOpacity>
+            </View>
+
+            {/* LOGIN BUTTON */}
+            <TouchableOpacity style={styles.btn} onPress={handleLoginWithAPI}>
+              <Text style={styles.btnText}>LOGIN</Text>
             </TouchableOpacity>
           </View>
-
-          {/* LOGIN BUTTON */}
-          <TouchableOpacity style={styles.btn} onPress={handleLoginWithAPI}>
-            <Text style={styles.btnText}>LOGIN</Text>
-          </TouchableOpacity>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  },
+
   container: {
     flex: 1,
-    justifyContent: "center", // CENTER EVERYTHING VERTICALLY
+    justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#fff",
     paddingHorizontal: 20,
     paddingVertical: 30,
   },
@@ -160,17 +180,9 @@ const styles = StyleSheet.create({
   },
 
   logo: {
-    width: 90,
-    height: 90,
-    marginBottom: 10,
-    borderRadius: 20, // <-- ADD THIS
-  },
-
-  appName: {
-    fontSize: 26,
-    fontWeight: "bold",
-    color: "#135CBE",
-    marginBottom: 5,
+    width: 200,
+    height: 60,
+    borderRadius: 20,
   },
 
   title: {
@@ -187,25 +199,27 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
 
-  input: {
-    width: "90%",
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 15,
-    fontSize: 16,
-  },
-
-  passwordContainer: {
+  inputContainer: {
     width: "90%",
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 10,
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 10,
+    paddingHorizontal: 12,
     marginBottom: 15,
+    backgroundColor: "rgba(255, 255, 255, 0.85)", // Background image par inputs clean dikhe isliye
+  },
+
+  inputIcon: {
+    marginRight: 10,
+  },
+
+  inputField: {
+    flex: 1,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: "#000",
   },
 
   passwordInput: {
