@@ -6,7 +6,10 @@ import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
+  ImageBackground,
   Modal,
+  StatusBar,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -16,6 +19,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Colors } from "../constants/Colors";
 
 SplashScreen.preventAutoHideAsync();
+
+const { width } = Dimensions.get("window");
 
 export default function RootLayout() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -63,7 +68,6 @@ export default function RootLayout() {
     }
   };
 
-  // 🔹 Initialize login status
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -72,7 +76,7 @@ export default function RootLayout() {
         if (userInfo?.userID) {
           setIsLoggedIn(true);
           if (isLoginPage) {
-            router.replace("/Home"); // go to Home if currently on Login page
+            router.replace("/Home");
           }
         } else {
           setIsLoggedIn(false);
@@ -90,11 +94,9 @@ export default function RootLayout() {
       }
     };
 
-    // ✅ Run on mount AND whenever pathname changes (like after login)
     checkLoginStatus();
   }, [pathname]);
 
-  // 🔹 Update activeTab on route change
   useEffect(() => {
     if (!pathname) return;
 
@@ -106,7 +108,6 @@ export default function RootLayout() {
     else setActiveTab("Home");
   }, [pathname]);
 
-  // 🔹 Wait until loading is finished
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -115,7 +116,6 @@ export default function RootLayout() {
     );
   }
 
-  // 🔹 Show login page only if not logged in
   if (!isLoggedIn && isLoginPage) {
     return <Slot key={refreshKey} />;
   }
@@ -129,14 +129,25 @@ export default function RootLayout() {
 
   return (
     <View style={styles.container} key={refreshKey}>
-      {/* Header */}
+      <StatusBar barStyle="light-content" backgroundColor="#135CBE" />
+
+      {/* Responsive Branded Header with Background Image */}
       {isLoggedIn && (
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>{activeTab}</Text>
-          <TouchableOpacity onPress={toggleProfileModal}>
-            <Ionicons name="person-circle-outline" size={30} color="#fff" />
-          </TouchableOpacity>
-        </View>
+        <ImageBackground
+          source={require("../assets/images/header.png")}
+          style={styles.headerBanner}
+          resizeMode="cover"
+        >
+          <View style={styles.headerContent}>
+            <View style={styles.headerLeft} />
+            <TouchableOpacity
+              onPress={toggleProfileModal}
+              style={styles.profileIconContainer}
+            >
+              <Ionicons name="person-circle-outline" size={36} color="#fff" />
+            </TouchableOpacity>
+          </View>
+        </ImageBackground>
       )}
 
       {/* Page Content */}
@@ -159,12 +170,12 @@ export default function RootLayout() {
                   <Ionicons
                     name={tab.icon}
                     size={24}
-                    color={isActive ? "red" : Colors.GRAY}
+                    color={isActive ? "#80acdb" : Colors.GRAY}
                   />
                   <Text
                     style={[
                       styles.tabLabel,
-                      { color: isActive ? "red" : Colors.GRAY },
+                      { color: isActive ? "#80acdb" : Colors.GRAY },
                     ]}
                   >
                     {tab.name}
@@ -258,15 +269,30 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff" },
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  header: {
-    height: 90,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    backgroundColor: Colors.PRIMARY,
+
+  safeAreaHeader: {},
+  headerBanner: {
+    width: "100%",
+    // Responsive height calculate ki gayi hai screen width ke hisab se (approx 4.5 ratio)
+    height: width * 0.22,
+    justifyContent: "center",
+    overflow: "hidden",
   },
-  headerTitle: { color: "#fff", fontSize: 20, fontWeight: "bold" },
+  headerContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  profileIconContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 4,
+  },
+
   pageContent: { flex: 1 },
   tabBar: {
     flexDirection: "row",
@@ -288,7 +314,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 3,
     borderTopColor: "transparent",
   },
-  activeTab: { borderTopColor: "red" },
+  activeTab: { borderTopColor: "#80acdb" },
   tabLabel: { fontSize: 12, marginTop: 2 },
   modalBackground: {
     flex: 1,
@@ -307,19 +333,19 @@ const styles = StyleSheet.create({
   closeModalButton: {
     width: "100%",
     padding: 12,
-    backgroundColor: "#30ae9f",
+    backgroundColor: "#80acdb",
     marginVertical: 5,
     borderRadius: 5,
     alignItems: "center",
   },
-  closeModalText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  closeModalText: { color: "#000", fontSize: 15, fontWeight: "bold" },
   reportButton: {
     width: "100%",
     padding: 12,
-    backgroundColor: "#17b3d6",
+    backgroundColor: "#80acdb",
     marginVertical: 5,
     borderRadius: 5,
     alignItems: "center",
   },
-  reportText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
+  reportText: { color: "#000", fontSize: 15, fontWeight: "bold" },
 });

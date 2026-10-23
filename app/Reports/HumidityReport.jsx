@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
-  FlatList,
-  TouchableOpacity,
-  ScrollView,
-  Platform,
-  ActivityIndicator,
-} from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+import {
+  ActivityIndicator,
+  FlatList,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const HumidityReport = () => {
   const router = useRouter();
@@ -25,23 +25,31 @@ const HumidityReport = () => {
   const [loading, setLoading] = useState(true);
 
   // ✅ Default Start = Today 00:00
-const today = new Date();
+  const today = new Date();
 
-const [startDate, setStartDate] = useState(today);
-const [endDate, setEndDate] = useState(new Date());
+  const [startDate, setStartDate] = useState(today);
+  const [endDate, setEndDate] = useState(new Date());
 
-const [startTime, setStartTime] = useState(
-  new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0)
-);
+  const [startTime, setStartTime] = useState(
+    new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0),
+  );
 
-const [endTime, setEndTime] = useState(
-  new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59)
-);
+  const [endTime, setEndTime] = useState(
+    new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate(),
+      23,
+      59,
+      59,
+    ),
+  );
 
-
-  const [isStartDatePickerVisible, setStartDatePickerVisibility] = useState(false);
+  const [isStartDatePickerVisible, setStartDatePickerVisibility] =
+    useState(false);
   const [isEndDatePickerVisible, setEndDatePickerVisibility] = useState(false);
-  const [isStartTimePickerVisible, setStartTimePickerVisibility] = useState(false);
+  const [isStartTimePickerVisible, setStartTimePickerVisibility] =
+    useState(false);
   const [isEndTimePickerVisible, setEndTimePickerVisibility] = useState(false);
 
   const [debugInfo, setDebugInfo] = useState("");
@@ -80,17 +88,16 @@ const [endTime, setEndTime] = useState(
     try {
       setLoading(true);
       const response = await fetch(
-        `https://algotrack.in/webapiAlgosenztemp/api/Login/GetAllRegistrationNumbers?companyId=${cId}`
+        `https://algotrack.in/webapiAlgosenztemp/api/Login/GetAllRegistrationNumbers?companyId=${cId}`,
       );
       const data = await response.json();
       const vehiclesData = data.vehicles || [];
 
-       
       const mappedVehicles = vehiclesData.map((item, index) => ({
-          id: index + 1,
-      number: item.registrationNo, // ✅ Highlighted: use registrationNo
-      temp1InstalledFlag: item.temp1InstalledFlag,
-      temp2InstalledFlag: item.temp2InstalledFlag,
+        id: index + 1,
+        number: item.registrationNo, // ✅ Highlighted: use registrationNo
+        temp1InstalledFlag: item.temp1InstalledFlag,
+        temp2InstalledFlag: item.temp2InstalledFlag,
       }));
 
       setVehicles(mappedVehicles);
@@ -108,7 +115,7 @@ const [endTime, setEndTime] = useState(
     if (searchText.trim() === "") setFilteredVehicles(vehicles);
     else {
       const filtered = vehicles.filter((v) =>
-        v.number.toLowerCase().includes(searchText.toLowerCase())
+        v.number.toLowerCase().includes(searchText.toLowerCase()),
       );
       setFilteredVehicles(filtered);
     }
@@ -133,51 +140,53 @@ const [endTime, setEndTime] = useState(
     return `${hours}:${minutes}`;
   };
 
-const handleGenerate = async () => {
-  if (!selectedVehicle) {
-    alert("Please select a vehicle!");
-    return;
-  }
+  const handleGenerate = async () => {
+    if (!selectedVehicle) {
+      alert("Please select a vehicle!");
+      return;
+    }
 
-  setLoading(true);
-  try {
-    const startDateStr = formatDateOnly(startDate);
-    const endDateStr = formatDateOnly(endDate);
-    const startTimeStr = formatTimeOnly(startTime);
-    const endTimeStr = formatTimeOnly(endTime);
+    setLoading(true);
+    try {
+      const startDateStr = formatDateOnly(startDate);
+      const endDateStr = formatDateOnly(endDate);
+      const startTimeStr = formatTimeOnly(startTime);
+      const endTimeStr = formatTimeOnly(endTime);
 
-    const url = `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetTemperatureReport?registrationNo=${encodeURIComponent(
-      selectedVehicle.number
-    )}&startDate=${startDateStr}&startTime=${startTimeStr}&endDate=${endDateStr}&endTime=${endTimeStr}`;
+      const url = `https://www.algotrack.in/webapiAlgosenztemp/api/Login/GetTemperatureReport?registrationNo=${encodeURIComponent(
+        selectedVehicle.number,
+      )}&startDate=${startDateStr}&startTime=${startTimeStr}&endDate=${endDateStr}&endTime=${endTimeStr}`;
 
-    console.log("Fetching URL:", url); // ✅ Debug URL
+      console.log("Fetching URL:", url); // ✅ Debug URL
 
-    const response = await fetch(url);
-    const data = await response.json();
+      const response = await fetch(url);
+      const data = await response.json();
 
-    console.log("API Response:", data); // ✅ Debug response
+      console.log("API Response:", data); // ✅ Debug response
 
-    // Map only gpsDateTime and humidity values
-    const mappedData = data.map((item, index) => ({
-      id: index + 1,
-      gpsDateTime: item.gpsDateTime || item.DateTime || "",
-      humidity1: item.humidity1 || item.s1 || 0,
-      humidity2: item.humidity2 || item.s2 || 0,
-    }));
+      // Map only gpsDateTime and humidity values
+      const mappedData = data.map((item, index) => ({
+        id: index + 1,
+        gpsDateTime: item.gpsDateTime || item.DateTime || "",
+        humidity1: item.humidity1 || item.s1 || 0,
+        humidity2: item.humidity2 || item.s2 || 0,
+      }));
 
-    setTableData(mappedData);
-    setShowTable(true);
-  } catch (error) {
-    alert("Failed to fetch humidity report: " + error.message);
-  } finally {
-    setLoading(false);
-  }
-};
-
+      setTableData(mappedData);
+      setShowTable(true);
+    } catch (error) {
+      alert("Failed to fetch humidity report: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
-      style={[styles.vehicleItem, selectedVehicle?.id === item.id && styles.selectedItem]}
+      style={[
+        styles.vehicleItem,
+        selectedVehicle?.id === item.id && styles.selectedItem,
+      ]}
       onPress={() => handleSelectVehicle(item)}
     >
       <Text style={styles.vehicleText}>{item.number}</Text>
@@ -188,15 +197,23 @@ const handleGenerate = async () => {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.headerBack}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.headerBack}
+        >
+          <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Humidity Report</Text>
       </View>
 
       {/* Search */}
       <View style={styles.searchWrap}>
-        <Ionicons name="search" size={18} color="#666" style={styles.searchIcon} />
+        <Ionicons
+          name="search"
+          size={18}
+          color="#666"
+          style={styles.searchIcon}
+        />
         <TextInput
           style={styles.searchInput}
           placeholder="Search Device"
@@ -220,8 +237,10 @@ const handleGenerate = async () => {
       <View style={styles.listWrap}>
         {loading && !showTable ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color="#3e98fa" />
-            <Text style={styles.loadingText}>Loading registration numbers...</Text>
+            <ActivityIndicator size="small" color="#80acdb" />
+            <Text style={styles.loadingText}>
+              Loading registration numbers...
+            </Text>
           </View>
         ) : filteredVehicles.length > 0 ? (
           <FlatList
@@ -234,7 +253,9 @@ const handleGenerate = async () => {
           />
         ) : (
           <View style={styles.loadingContainer}>
-            <Text style={styles.loadingText}>No registration numbers found</Text>
+            <Text style={styles.loadingText}>
+              No registration numbers found
+            </Text>
           </View>
         )}
       </View>
@@ -246,7 +267,7 @@ const handleGenerate = async () => {
           style={styles.dateBox}
           onPress={() => setStartDatePickerVisibility(true)}
         >
-          <Ionicons name="calendar" size={20} color="#3e98fa" />
+          <Ionicons name="calendar" size={20} color="#80acdb" />
           <Text style={styles.dateText}>{startDate.toLocaleDateString()}</Text>
         </TouchableOpacity>
 
@@ -254,9 +275,12 @@ const handleGenerate = async () => {
           style={styles.dateBox}
           onPress={() => setStartTimePickerVisibility(true)}
         >
-          <Ionicons name="time-outline" size={20} color="#3e98fa" />
+          <Ionicons name="time-outline" size={20} color="#80acdb" />
           <Text style={styles.dateText}>
-            {startTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            {startTime.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </Text>
         </TouchableOpacity>
       </View>
@@ -267,7 +291,7 @@ const handleGenerate = async () => {
           style={styles.dateBox}
           onPress={() => setEndDatePickerVisibility(true)}
         >
-          <Ionicons name="calendar" size={20} color="#3e98fa" />
+          <Ionicons name="calendar" size={20} color="#80acdb" />
           <Text style={styles.dateText}>{endDate.toLocaleDateString()}</Text>
         </TouchableOpacity>
 
@@ -275,9 +299,12 @@ const handleGenerate = async () => {
           style={styles.dateBox}
           onPress={() => setEndTimePickerVisibility(true)}
         >
-          <Ionicons name="time-outline" size={20} color="#3e98fa" />
+          <Ionicons name="time-outline" size={20} color="#80acdb" />
           <Text style={styles.dateText}>
-            {endTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            {endTime.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </Text>
         </TouchableOpacity>
       </View>
@@ -289,142 +316,215 @@ const handleGenerate = async () => {
 
       {/* Date & Time Pickers */}
       {isStartDatePickerVisible && (
-        <DateTimePicker value={startDate} mode="date" display={Platform.OS === "ios" ? "spinner" : "default"} onChange={(e,d)=>{setStartDatePickerVisibility(false); if(d)setStartDate(d)}} />
+        <DateTimePicker
+          value={startDate}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={(e, d) => {
+            setStartDatePickerVisibility(false);
+            if (d) setStartDate(d);
+          }}
+        />
       )}
       {isStartTimePickerVisible && (
-        <DateTimePicker value={startTime} mode="time" display={Platform.OS === "ios" ? "spinner" : "default"} onChange={(e,d)=>{setStartTimePickerVisibility(false); if(d)setStartTime(d)}} />
+        <DateTimePicker
+          value={startTime}
+          mode="time"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={(e, d) => {
+            setStartTimePickerVisibility(false);
+            if (d) setStartTime(d);
+          }}
+        />
       )}
       {isEndDatePickerVisible && (
-        <DateTimePicker value={endDate} mode="date" display={Platform.OS === "ios" ? "spinner" : "default"} onChange={(e,d)=>{setEndDatePickerVisibility(false); if(d)setEndDate(d)}} />
+        <DateTimePicker
+          value={endDate}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={(e, d) => {
+            setEndDatePickerVisibility(false);
+            if (d) setEndDate(d);
+          }}
+        />
       )}
       {isEndTimePickerVisible && (
-        <DateTimePicker value={endTime} mode="time" display={Platform.OS === "ios" ? "spinner" : "default"} onChange={(e,d)=>{setEndTimePickerVisibility(false); if(d)setEndTime(d)}} />
+        <DateTimePicker
+          value={endTime}
+          mode="time"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={(e, d) => {
+            setEndTimePickerVisibility(false);
+            if (d) setEndTime(d);
+          }}
+        />
       )}
 
       {/* Temperature Table (gpsDateTime + Temps) */}
-{showTable && selectedVehicle && (
-  <ScrollView horizontal style={{ margin: 16 }}>
-    <View>
-      {/* Table Header */}
-      <View style={[styles.tableRow, styles.tableHeader]}>
-        <Text style={[styles.tableCell, { width: 150 }]}>Date & Time</Text>
-        <Text style={[styles.tableCell, { width: 100 }]}>S1 Hum</Text>
-        {/* Removed S2 Hum */}
-      </View>
+      {showTable && selectedVehicle && (
+        <ScrollView horizontal style={{ margin: 16 }}>
+          <View>
+            {/* Table Header */}
+            <View style={[styles.tableRow, styles.tableHeader]}>
+              <Text style={[styles.tableCell, { width: 150 }]}>
+                Date & Time
+              </Text>
+              <Text style={[styles.tableCell, { width: 100 }]}>S1 Hum</Text>
+              {/* Removed S2 Hum */}
+            </View>
 
-      {/* Table Rows */}
-      <FlatList
-        data={tableData}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item, index }) => (
-          <View
-            style={[
-              styles.tableRow,
-              { backgroundColor: index % 2 === 0 ? "#f2f2f2" : "#fff" },
-            ]}
-          >
-            <Text style={[styles.tableCell, { width: 150 }]}>{item.gpsDateTime}</Text>
-            <Text style={[styles.tableCell, { width: 100 }]}>{item.humidity1}%</Text>
-            {/* Removed S2 Hum */}
+            {/* Table Rows */}
+            <FlatList
+              data={tableData}
+              keyExtractor={(item) => item.id.toString()}
+              renderItem={({ item, index }) => (
+                <View
+                  style={[
+                    styles.tableRow,
+                    { backgroundColor: index % 2 === 0 ? "#f2f2f2" : "#fff" },
+                  ]}
+                >
+                  <Text style={[styles.tableCell, { width: 150 }]}>
+                    {item.gpsDateTime}
+                  </Text>
+                  <Text style={[styles.tableCell, { width: 100 }]}>
+                    {item.humidity1}%
+                  </Text>
+                  {/* Removed S2 Hum */}
+                </View>
+              )}
+            />
           </View>
-        )}
-      />
-    </View>
-  </ScrollView>
-)}
-
+        </ScrollView>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#fff"
-   },
+  container: {
+    flex: 1,
+    backgroundColor: "#fff",
+  },
   header: {
-     backgroundColor: "#3e98fa", 
-     paddingVertical: 14, 
-     paddingHorizontal: 16, 
-     flexDirection: "row", 
-     alignItems: "center" 
-    },
+    backgroundColor: "#80acdb",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    flexDirection: "row",
+    alignItems: "center",
+  },
   headerBack: {
-    
-    marginRight: 12 
+    marginRight: 12,
   },
-  headerTitle: { color: "#fff", 
-    fontSize: 18, 
-    fontWeight: "600" 
-  },
-  searchWrap: { flexDirection: "row", 
-    alignItems: "center", 
-    marginHorizontal: 16, 
-    marginTop: 12, borderWidth: 1, 
-    borderColor: "#ddd", 
-    borderRadius: 10, 
-    paddingHorizontal: 10, 
-    backgroundColor: "#fff", 
-    height: 44 
+  headerTitle: { color: "#000", fontSize: 15, fontWeight: "bold" },
+  searchWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 16,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    backgroundColor: "#fff",
+    height: 44,
   },
   searchIcon: { marginRight: 8 },
   searchInput: { flex: 1, height: "100%", color: "#222" },
-  listWrap: { marginHorizontal: 16, marginTop: 12, maxHeight: 200, borderRadius: 8, overflow: "hidden", borderWidth: 1, borderColor: "#ddd" },
+  listWrap: {
+    marginHorizontal: 16,
+    marginTop: 12,
+    maxHeight: 200,
+    borderRadius: 8,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#ddd",
+  },
   listContent: { paddingBottom: 8 },
-  loadingContainer: { justifyContent: "center", alignItems: "center", padding: 20 },
+  loadingContainer: {
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 20,
+  },
   loadingText: { fontSize: 14, color: "#666", fontWeight: "500" },
-  vehicleItem: { backgroundColor: "#fafafa", paddingVertical: 14, paddingHorizontal: 12 },
+  vehicleItem: {
+    backgroundColor: "#fafafa",
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+  },
   vehicleText: { color: "#000", fontWeight: "600" },
   selectedItem: { backgroundColor: "#dcefff" },
   separator: { height: 1, backgroundColor: "#ddd" },
-  label: { fontWeight: "600", fontSize: 14, marginHorizontal: 16, marginTop: 12 },
- row: { 
-  flexDirection: "row", 
-  justifyContent: "space-between", 
-  marginTop: 5, 
-  marginHorizontal: 16 // <-- added horizontal margin
-},
+  label: {
+    fontWeight: "600",
+    fontSize: 14,
+    marginHorizontal: 16,
+    marginTop: 12,
+  },
+  row: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginTop: 5,
+    marginHorizontal: 16, // <-- added horizontal margin
+  },
 
-dateBox: { 
-  flexDirection: "row", 
-  alignItems: "center", 
-  justifyContent: "center", 
-  paddingHorizontal: 10, 
-  width: 140, 
-  height: 44, 
-  borderWidth: 1, 
-  borderColor: "#3e98fa", 
-  borderRadius: 6, 
-  marginRight: 12, 
-},
+  dateBox: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 10,
+    width: 140,
+    height: 44,
+    borderWidth: 1,
+    borderColor: "#80acdb",
+    borderRadius: 6,
+    marginRight: 12,
+  },
 
-  dateText: { marginLeft: 6, color: "#3e98fa", fontWeight: "600" },
-  generateButton: { marginHorizontal: 16, marginTop: 16, backgroundColor: "#3e98fa", paddingVertical: 12, borderRadius: 8, alignItems: "center" },
-  generateButtonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
-  debugPanel: { backgroundColor: "#fff3cd", padding: 8, marginHorizontal: 16, marginTop: 12 },
+  dateText: { marginLeft: 6, color: "#80acdb", fontWeight: "600" },
+  generateButton: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    backgroundColor: "#80acdb",
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  generateButtonText: { color: "#000", fontSize: 16, fontWeight: "600" },
+  debugPanel: {
+    backgroundColor: "#fff3cd",
+    padding: 8,
+    marginHorizontal: 16,
+    marginTop: 12,
+  },
   debugText: { color: "#856404", fontSize: 12 },
-  card: { backgroundColor: "#fff", padding: 15, marginVertical: 8, borderRadius: 10, elevation: 3 },
+  card: {
+    backgroundColor: "#fff",
+    padding: 15,
+    marginVertical: 8,
+    borderRadius: 10,
+    elevation: 3,
+  },
   timeText: { fontSize: 14, fontWeight: "700", marginBottom: 5 },
   tempLabel: { fontSize: 16, fontWeight: "600" },
   tempValue: { fontSize: 16, fontWeight: "bold", color: "#ff5733" },
   tableRow: {
-  flexDirection: "row",
-  paddingVertical: 10,
-  paddingHorizontal: 5,
-  borderBottomWidth: 1,
-  borderBottomColor: "#ddd",
-  alignItems: "center",
-},
-tableHeader: {
-  backgroundColor: "#3e98fa",
-},
-tableCell: {
-  fontSize: 14,
-  fontWeight: "600",
-  color: "#000",
-  textAlign: "center",
-},
-
+    flexDirection: "row",
+    paddingVertical: 10,
+    paddingHorizontal: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ddd",
+    alignItems: "center",
+  },
+  tableHeader: {
+    backgroundColor: "#80acdb",
+  },
+  tableCell: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#000",
+    textAlign: "center",
+  },
 });
 
 export default HumidityReport;

@@ -1,11 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   Animated,
-  Image,
   ScrollView,
   StyleSheet,
   Text,
@@ -39,7 +39,7 @@ const Home = () => {
 
         if (!companyId) {
           console.log("⏳ companyId not ready yet");
-          return; // ❌ no redirect, ❌ no crash
+          return;
         }
 
         const statsRes = await axios.get(
@@ -120,6 +120,8 @@ const Home = () => {
       color: "#ff4d4d",
       icon: "hardware-chip-outline",
       tab: "all",
+      bgIconColor: "#ffe6e6",
+      gradientColors: ["#ffffff", "#fff5f5"],
     },
     {
       title: "Reporting",
@@ -127,6 +129,8 @@ const Home = () => {
       color: "#00ccb3",
       icon: "wifi-outline",
       tab: "reporting",
+      bgIconColor: "#e6fffb",
+      gradientColors: ["#ffffff", "#f0fffb"],
     },
     {
       title: "Delayed",
@@ -134,6 +138,8 @@ const Home = () => {
       color: "#0099ff",
       icon: "pause-circle-outline",
       tab: "delayed",
+      bgIconColor: "#e6f2ff",
+      gradientColors: ["#ffffff", "#f0f6ff"],
     },
     {
       title: "Critical",
@@ -141,23 +147,20 @@ const Home = () => {
       color: "#ff3333",
       icon: "power-outline",
       tab: "critical",
+      bgIconColor: "#ffe6e6",
+      gradientColors: ["#ffffff", "#fff5f5"],
     },
   ];
 
-  // --------- DONUT CHART HELPER ---------
-  // --------- DONUT CHART HELPER ---------
   const createDonut = (data, radius, onPress) => {
     const total = data.reduce((sum, item) => sum + Number(item.value || 0), 0);
-    const center = 110;
-
+    const center = 85;
     const visible = data.filter((i) => i.value > 0);
 
-    // ⭐ If only 1 slice → draw full circle + label on EDGE
     if (visible.length === 1) {
       const item = visible[0];
-
-      const labelX = center; // middle horizontally
-      const labelY = center - radius + 40; // ⭐ push label INTO slice
+      const labelX = center;
+      const labelY = center - radius + 30;
 
       return (
         <G>
@@ -168,13 +171,11 @@ const Home = () => {
             fill={item.color}
             onPress={() => onPress(data.indexOf(item))}
           />
-
-          {/* ⭐ label on slice (NOT in middle white circle) */}
           <SVGText
             x={labelX}
             y={labelY}
-            fill="black"
-            fontSize="16"
+            fill="white"
+            fontSize="14"
             fontWeight="bold"
             textAnchor="middle"
           >
@@ -184,7 +185,6 @@ const Home = () => {
       );
     }
 
-    // ⭐ Multi slice logic
     let startAngle = 0;
     return data.map((item, index) => {
       if (item.value === 0) return null;
@@ -206,7 +206,6 @@ const Home = () => {
       Z
     `;
 
-      // ⭐ label inside slice (higher so white circle won't hide)
       const midAngle = startAngle + sliceAngle / 2;
       const labelX = center + (radius / 1.4) * Math.cos(midAngle);
       const labelY = center + (radius / 1.4) * Math.sin(midAngle);
@@ -216,13 +215,11 @@ const Home = () => {
       return (
         <G key={index}>
           <Path d={path} fill={item.color} onPress={() => onPress(index)} />
-
-          {/* ⭐ label ALWAYS visible on slice */}
           <SVGText
             x={labelX}
             y={labelY}
-            fill="black"
-            fontSize="14"
+            fill="white"
+            fontSize="13"
             fontWeight="bold"
             textAnchor="middle"
           >
@@ -273,12 +270,15 @@ const Home = () => {
     }
   };
 
-  const renderLegend = (data) => (
-    <View style={styles.legendContainer}>
+  const renderStatsList = (data) => (
+    <View style={styles.statsListContainer}>
       {data.map((item) => (
-        <View key={item.key} style={styles.legendItem}>
-          <View style={[styles.legendColor, { backgroundColor: item.color }]} />
-          <Text style={styles.legendLabel}>{item.label}</Text>
+        <View key={item.key} style={styles.statRow}>
+          <View style={styles.statLabelContainer}>
+            <View style={[styles.statDot, { backgroundColor: item.color }]} />
+            <Text style={styles.statLabelText}>{item.label}</Text>
+          </View>
+          <Text style={styles.statValueText}>{item.value}</Text>
         </View>
       ))}
     </View>
@@ -296,7 +296,19 @@ const Home = () => {
         contentContainerStyle={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Cards */}
+        {/* Top Header */}
+        <View style={styles.headerRow}>
+          <View style={styles.headerTitleContainer}>
+            <Ionicons name="home-outline" size={22} color="#111" />
+            <Text style={styles.headerTitle}>Home</Text>
+          </View>
+          <View style={styles.realtimeContainer}>
+            <Text style={styles.realtimeText}>Real-time Overview</Text>
+            <View style={styles.greenDot} />
+          </View>
+        </View>
+
+        {/* Cards with Linear Gradient */}
         {Array.from({ length: Math.ceil(cardData.length / 2) }).map(
           (_, rowIndex) => {
             const rowCards = cardData.slice(rowIndex * 2, rowIndex * 2 + 2);
@@ -305,17 +317,48 @@ const Home = () => {
                 {rowCards.map((card, idx) => (
                   <TouchableOpacity
                     key={idx}
-                    style={styles.smallCard}
+                    style={styles.smallCardWrapper}
                     onPress={() => router.push(`/DeviceTab/${card.tab}`)}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.cardTitle}>{card.title}</Text>
-                    <View style={styles.cardContent}>
-                      <Text style={[styles.cardValue, { color: card.color }]}>
-                        {card.value}
-                      </Text>
-                      <Ionicons name={card.icon} size={28} color={card.color} />
-                    </View>
+                    <LinearGradient
+                      colors={card.gradientColors}
+                      style={styles.smallCard}
+                    >
+                      <View style={styles.cardInnerRow}>
+                        <View
+                          style={[
+                            styles.iconCircle,
+                            { backgroundColor: card.bgIconColor },
+                          ]}
+                        >
+                          <Ionicons
+                            name={card.icon}
+                            size={24}
+                            color={card.color}
+                          />
+                        </View>
+                        <View style={styles.cardTextContainer}>
+                          <Text style={styles.cardTitle}>{card.title}</Text>
+                          <View style={styles.cardValueRow}>
+                            <Text
+                              style={[styles.cardValue, { color: card.color }]}
+                            >
+                              {card.value.split(" ")[0]}
+                            </Text>
+                            <Text style={styles.cardDevicesLabel}>
+                              {" "}
+                              {card.value.split(" ")[1]}
+                            </Text>
+                          </View>
+                        </View>
+                        <Ionicons
+                          name="chevron-forward"
+                          size={18}
+                          color="#b0b0b0"
+                        />
+                      </View>
+                    </LinearGradient>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -323,66 +366,74 @@ const Home = () => {
           },
         )}
 
-        {/* Temperature Chart */}
-        <View style={{ alignItems: "center", marginVertical: 20 }}>
-          <Text style={styles.donutHeading}>Temperature</Text>
-          <View style={{ position: "relative", height: 220, width: 220 }}>
-            <Svg height={220} width={220}>
-              {createDonut(tempData, 100, handleTempSelect)}
-              <Circle cx={110} cy={110} r={45} fill="white" />
-            </Svg>
-            <TouchableOpacity
-              style={styles.centerIconContainer}
-              onPress={handleTempIconClick}
-            >
-              <Text style={styles.centerCount}>{totalTemp}</Text>
-              <Image
-                source={require("../assets/images/thermometer.png")}
-                style={styles.centerImage}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
+        {/* Temperature Box Card */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleWrapper}>
+              <View style={styles.sectionIconBg}>
+                <Ionicons
+                  name="thermometer-outline"
+                  size={20}
+                  color="#0080ff"
+                />
+              </View>
+              <Text style={styles.sectionHeading}>Temperature</Text>
+            </View>
+            <View style={styles.badgeContainer}>
+              <Ionicons name="snow-outline" size={14} color="#0066cc" />
+              <Text style={styles.badgeText}>°C</Text>
+            </View>
           </View>
-          {selectedTempSlice !== null && (
-            <Animated.Text
-              style={[styles.selectedValueText, { opacity: tempOpacity }]}
-            >
-              {tempData[selectedTempSlice].label}:{" "}
-              {tempData[selectedTempSlice].value}
-            </Animated.Text>
-          )}
-          {renderLegend(tempData)}
+
+          <View style={styles.chartAndStatsRow}>
+            <View style={styles.chartWrapper}>
+              <Svg height={170} width={170}>
+                {createDonut(tempData, 75, handleTempSelect)}
+                <Circle cx={85} cy={85} r={35} fill="white" />
+              </Svg>
+              <TouchableOpacity
+                style={styles.centerIconContainer}
+                onPress={handleTempIconClick}
+              >
+                <Text style={styles.centerCount}>{totalTemp}</Text>
+                <Text style={styles.centerSubText}>Total Devices</Text>
+              </TouchableOpacity>
+            </View>
+            {renderStatsList(tempData)}
+          </View>
         </View>
 
-        {/* Humidity Chart */}
-        <View style={{ alignItems: "center", marginVertical: 20 }}>
-          <Text style={styles.donutHeading}>Humidity</Text>
-          <View style={{ position: "relative", height: 220, width: 220 }}>
-            <Svg height={220} width={220}>
-              {createDonut(humData, 100, handleHumSelect)}
-              <Circle cx={110} cy={110} r={45} fill="white" />
-            </Svg>
-            <TouchableOpacity
-              style={styles.centerIconContainer}
-              onPress={handleHumIconClick}
-            >
-              <Text style={styles.centerCount}>{totalHum}</Text>
-              <Image
-                source={require("../assets/images/smart-sensor.png")}
-                style={styles.centerImage}
-                resizeMode="contain"
-              />
-            </TouchableOpacity>
+        {/* Humidity Box Card */}
+        <View style={styles.sectionCard}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.sectionTitleWrapper}>
+              <View style={styles.sectionIconBg}>
+                <Ionicons name="water-outline" size={20} color="#0080ff" />
+              </View>
+              <Text style={styles.sectionHeading}>Humidity</Text>
+            </View>
+            <View style={styles.badgeContainer}>
+              <Ionicons name="water" size={14} color="#0066cc" />
+              <Text style={styles.badgeText}>%RH</Text>
+            </View>
           </View>
-          {selectedHumSlice !== null && (
-            <Animated.Text
-              style={[styles.selectedValueText, { opacity: humOpacity }]}
-            >
-              {humData[selectedHumSlice].label}:{" "}
-              {humData[selectedHumSlice].value}
-            </Animated.Text>
-          )}
-          {renderLegend(humData)}
+
+          <View style={styles.chartAndStatsRow}>
+            <View style={styles.chartWrapper}>
+              <Svg height={170} width={170}>
+                {createDonut(humData, 75, handleHumSelect)}
+                <Circle cx={85} cy={85} r={35} fill="white" />
+              </Svg>
+              <TouchableOpacity
+                style={styles.centerIconContainer}
+                onPress={handleHumIconClick}
+              >
+                <Text style={styles.centerCount}>{totalHum}</Text>
+                <Text style={styles.centerSubText}>Total Devices</Text>
+              </TouchableOpacity>
+            </View>
+            {renderStatsList(humData)}
+          </View>
         </View>
       </ScrollView>
     </View>
@@ -390,55 +441,191 @@ const Home = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, marginTop: 20 },
+  container: { flex: 1, backgroundColor: "#f4f7fc" },
   scrollContainer: { padding: 16, paddingBottom: 100 },
+  headerRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  headerTitleContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  headerTitle: {
+    fontSize: 22,
+    fontWeight: "bold",
+    color: "#111",
+    marginLeft: 8,
+  },
+  realtimeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  realtimeText: {
+    fontSize: 12,
+    color: "#666",
+    marginRight: 6,
+    fontWeight: "500",
+  },
+  greenDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#22c55e",
+  },
   cardRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 12,
+  },
+  smallCardWrapper: {
+    width: "48%",
+    borderRadius: 14,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    overflow: "hidden",
   },
   smallCard: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
     padding: 12,
-    elevation: 4,
-    width: "48%",
+    borderRadius: 14,
   },
-  cardTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 8 },
-  cardContent: {
+  cardInnerRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
-  cardValue: { fontSize: 14, fontWeight: "600" },
-  donutHeading: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 10,
-    alignSelf: "flex-start",
-    marginLeft: 5,
+  iconCircle: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
   },
-  selectedValueText: {
+  cardTextContainer: {
+    flex: 1,
+  },
+  cardTitle: {
+    fontSize: 12,
+    color: "#666",
+    fontWeight: "600",
+    marginBottom: 2,
+  },
+  cardValueRow: {
+    flexDirection: "row",
+    alignItems: "baseline",
+  },
+  cardValue: { fontSize: 18, fontWeight: "bold" },
+  cardDevicesLabel: { fontSize: 11, color: "#777" },
+  sectionCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 12,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  sectionTitleWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  sectionIconBg: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#e6f2ff",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 8,
+  },
+  sectionHeading: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
-    marginTop: 10,
+    color: "#111",
   },
-  legendContainer: { flexDirection: "row", marginTop: 10 },
-  legendItem: { flexDirection: "row", alignItems: "center", marginRight: 15 },
-  legendColor: { width: 15, height: 15, marginRight: 5, borderRadius: 10 },
-  legendLabel: { fontSize: 14, color: "#333" },
+  badgeContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#e6f2ff",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#0066cc",
+    marginLeft: 4,
+  },
+  chartAndStatsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  chartWrapper: {
+    position: "relative",
+    height: 170,
+    width: 170,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statsListContainer: {
+    flex: 1,
+    marginLeft: 15,
+  },
+  statRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderBottomWidth: 0.5,
+    borderBottomColor: "#eee",
+  },
+  statLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  statDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
+  },
+  statLabelText: {
+    fontSize: 14,
+    color: "#441",
+    fontWeight: "500",
+  },
+  statValueText: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: "#111",
+  },
   centerIconContainer: {
     position: "absolute",
     top: "50%",
     left: "50%",
-    transform: [{ translateX: -25 }, { translateY: -35 }],
+    transform: [{ translateX: -30 }, { translateY: -20 }],
     alignItems: "center",
     justifyContent: "center",
+    width: 60,
   },
-  centerImage: { width: 45, height: 55 },
-  centerCount: { fontSize: 18, fontWeight: "600" },
+  centerCount: { fontSize: 16, fontWeight: "bold", color: "#111" },
+  centerSubText: { fontSize: 10, color: "#111", textAlign: "center" },
 });
 
 export default Home;
+

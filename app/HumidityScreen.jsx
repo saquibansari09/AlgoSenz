@@ -86,7 +86,7 @@ export default function DeviceScreen() {
       {/* 🔹 Header with back arrow and title */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backIcon}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Humidity</Text>
       </View>
@@ -200,14 +200,14 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#3e98fa",
+    backgroundColor: "#80acdb",
     paddingVertical: 15,
     paddingHorizontal: 20,
   },
   backIcon: { marginRight: 10 },
   headerTitle: {
-    color: "#fff",
-    fontSize: 20,
+    color: "#000",
+    fontSize: 15,
     fontWeight: "bold",
   },
 

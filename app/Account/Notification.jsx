@@ -1,13 +1,12 @@
-import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-} from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
 const notifications = [
   {
@@ -56,7 +55,7 @@ export default function Notification() {
       {/* Header with Back Arrow */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
 
         <Text style={styles.headerText}>Notifications</Text>
@@ -87,14 +86,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: "#3e98fa",
+    backgroundColor: "#80acdb",
     columnGap: 12,
   },
 
   headerText: {
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
+    color: "#000",
+    fontSize: 15,
+    fontWeight: "bold",
   },
 
   card: {

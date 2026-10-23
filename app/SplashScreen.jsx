@@ -18,7 +18,7 @@ export default function MySplashScreen() {
   return (
     <View style={styles.container}>
       <Image
-        source={require("../assets/images/Logo.png")}
+        source={require("../assets/images/ic_launcher_foreground.png")}
         style={styles.logo}
       />
     </View>

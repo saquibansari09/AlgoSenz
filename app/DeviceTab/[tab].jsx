@@ -624,10 +624,10 @@ export default function DeviceTab() {
 }
 
 const styles = StyleSheet.create({
-  tabContainer: { flexDirection: "row", backgroundColor: "#3e98fa" },
+  tabContainer: { flexDirection: "row", backgroundColor: "#80acdb" },
   tabButton: { flex: 1, padding: 12, alignItems: "center" },
-  tabText: { color: "white", fontSize: 14 },
-  activeTab: { borderBottomWidth: 3, borderBottomColor: "#ff5634" },
+  tabText: { color: "#000", fontSize: 14 },
+  activeTab: { borderBottomWidth: 3, borderBottomColor: "#053aa4" },
   activeTabText: { fontWeight: "bold" },
   loader: { flex: 1, justifyContent: "center", alignItems: "center" },
   topBar: {

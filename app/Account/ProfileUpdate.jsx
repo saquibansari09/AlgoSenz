@@ -1,17 +1,17 @@
-import React, { useState } from "react";
+import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
-  View,
+  Alert,
+  Image,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  Image,
-  Alert,
+  View,
 } from "react-native";
-import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
 
 export default function UpdatePasswordScreen() {
   const router = useRouter();
@@ -69,19 +69,18 @@ export default function UpdatePasswordScreen() {
       await axios.post(
         "https://www.algotrack.in/webapiAlgosenztemp/api/Login/PostUpdatePassword",
         body,
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { "Content-Type": "application/json" } },
       );
 
       // ✅ Show success alert instead of setSuccess
       Alert.alert("Success", "Password updated successfully!");
-      
+
       // Optional: clear fields after update
       setOldPassword("");
       setNewPassword("");
       setMobile("");
       setEmail("");
       setErrors({});
-
     } catch (error) {
       console.log(error);
       Alert.alert("Error", "Something went wrong!");
@@ -93,7 +92,7 @@ export default function UpdatePasswordScreen() {
       {/* HEADER */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Update Password</Text>
@@ -105,73 +104,110 @@ export default function UpdatePasswordScreen() {
         {/* LOGO */}
         <View style={styles.logoWrapper}>
           <Image
-            source={require("../../assets/images/icon.png")}
+            source={require("../../assets/images/Logo.png")}
             style={styles.logo}
           />
         </View>
 
-      {/* OLD PASSWORD */}
-      <View style={styles.inputWrapper}>
-        <TextInput
-          style={styles.inputField}
-          placeholder="Old Password"
-           placeholderTextColor="#555"  // ✅ Light gray placeholder
-          secureTextEntry={!showOld}
-          value={oldPassword}
-          onChangeText={setOldPassword}
-        />
-        <TouchableOpacity onPress={() => setShowOld(!showOld)}>
-          <Ionicons name={showOld ? "eye-off" : "eye"} size={22} color="gray" />
+        {/* OLD PASSWORD */}
+        <View style={styles.inputWrapper}>
+          <Ionicons
+            name="lock-closed-outline"
+            size={20}
+            color="gray"
+            style={styles.leftIcon}
+          />
+          <TextInput
+            style={styles.inputField}
+            placeholder="Old Password"
+            placeholderTextColor="#555" // ✅ Light gray placeholder
+            secureTextEntry={!showOld}
+            value={oldPassword}
+            onChangeText={setOldPassword}
+          />
+          <TouchableOpacity onPress={() => setShowOld(!showOld)}>
+            <Ionicons
+              name={showOld ? "eye-off" : "eye"}
+              size={22}
+              color="gray"
+            />
+          </TouchableOpacity>
+        </View>
+        {errors.oldPassword && (
+          <Text style={styles.error}>{errors.oldPassword}</Text>
+        )}
+
+        {/* NEW PASSWORD */}
+        <View style={styles.inputWrapper}>
+          <Ionicons
+            name="lock-open-outline"
+            size={20}
+            color="gray"
+            style={styles.leftIcon}
+          />
+          <TextInput
+            style={styles.inputField}
+            placeholder="New Password"
+            placeholderTextColor="#555" // ✅ Light gray placeholder
+            secureTextEntry={!showNew}
+            value={newPassword}
+            onChangeText={setNewPassword}
+          />
+          <TouchableOpacity onPress={() => setShowNew(!showNew)}>
+            <Ionicons
+              name={showNew ? "eye-off" : "eye"}
+              size={22}
+              color="gray"
+            />
+          </TouchableOpacity>
+        </View>
+        {errors.newPassword && (
+          <Text style={styles.error}>{errors.newPassword}</Text>
+        )}
+
+        {/* MOBILE */}
+        <View style={styles.inputWrapper}>
+          <Ionicons
+            name="call-outline"
+            size={20}
+            color="gray"
+            style={styles.leftIcon}
+          />
+          <TextInput
+            style={styles.inputField}
+            placeholder="New Mobile No"
+            placeholderTextColor="#555" // ✅ Light gray placeholder
+            value={mobile}
+            onChangeText={setMobile}
+            keyboardType="numeric"
+          />
+        </View>
+        {errors.mobile && <Text style={styles.error}>{errors.mobile}</Text>}
+
+        {/* EMAIL */}
+        <View style={styles.inputWrapper}>
+          <Ionicons
+            name="mail-outline"
+            size={20}
+            color="gray"
+            style={styles.leftIcon}
+          />
+          <TextInput
+            style={styles.inputField}
+            placeholder="New Email"
+            placeholderTextColor="#555" // ✅ Light gray placeholder
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+          />
+        </View>
+        {errors.email && <Text style={styles.error}>{errors.email}</Text>}
+
+        {/* UPDATE BUTTON */}
+        <TouchableOpacity style={styles.btn} onPress={handleUpdate}>
+          <Text style={styles.btnText}>Update</Text>
         </TouchableOpacity>
       </View>
-      {errors.oldPassword && (
-        <Text style={styles.error}>{errors.oldPassword}</Text>
-      )}
-
-      {/* NEW PASSWORD */}
-      <View style={styles.inputWrapper}>
-        <TextInput
-          style={styles.inputField}
-          placeholder="New Password"
-           placeholderTextColor="#555"  // ✅ Light gray placeholder
-          secureTextEntry={!showNew}
-          value={newPassword}
-          onChangeText={setNewPassword}
-        />
-        <TouchableOpacity onPress={() => setShowNew(!showNew)}>
-          <Ionicons name={showNew ? "eye-off" : "eye"} size={22} color="gray" />
-        </TouchableOpacity>
-      </View>
-      {errors.newPassword && (
-        <Text style={styles.error}>{errors.newPassword}</Text>
-      )}
-
-      {/* MOBILE */}
-      <TextInput
-        style={styles.input}
-        placeholder="New Mobile No"
-         placeholderTextColor="#555"  // ✅ Light gray placeholder
-        value={mobile}
-        onChangeText={setMobile}
-        keyboardType="numeric"
-      />
-      {errors.mobile && <Text style={styles.error}>{errors.mobile}</Text>}
-
-      {/* EMAIL */}
-      <TextInput
-        style={styles.input}
-        placeholder="New Email"
-         placeholderTextColor="#555"  // ✅ Light gray placeholder
-        value={email}
-        onChangeText={setEmail}
-      />
-      {errors.email && <Text style={styles.error}>{errors.email}</Text>}
-
-      {/* UPDATE BUTTON */}
-      <TouchableOpacity style={styles.btn} onPress={handleUpdate}>
-        <Text style={styles.btnText}>Update</Text>
-      </TouchableOpacity>
-    </View>
     </View>
   );
 }
@@ -184,7 +220,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
 
-   root: {
+  root: {
     flex: 1,
     backgroundColor: "#fff",
   },
@@ -192,7 +228,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#3e98fa",
+    backgroundColor: "#80acdb",
     paddingHorizontal: 16,
     paddingVertical: 14,
     columnGap: 12,
@@ -200,12 +236,12 @@ const styles = StyleSheet.create({
 
   headerTitle: {
     flex: 1,
-    color: "#fff",
-    fontSize: 18,
-    fontWeight: "600",
+    color: "#000",
+    fontSize: 15,
+    fontWeight: "bold",
   },
 
-   logoWrapper: {
+  logoWrapper: {
     alignItems: "center",
     marginBottom: 20,
   },
@@ -215,7 +251,7 @@ const styles = StyleSheet.create({
     height: 130,
     borderRadius: 130 / 2,
     borderWidth: 3,
-    borderColor: "#17b3d6",
+    borderColor: "#80acdb",
     resizeMode: "cover",
   },
 
@@ -225,7 +261,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#ccc",
     borderRadius: 10,
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     height: 50,
     marginBottom: 5,
   },
@@ -237,14 +273,8 @@ const styles = StyleSheet.create({
     color: "#000", // ✅ TEXT COLOR BLACK
   },
 
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 12,
-    borderRadius: 10,
-    fontSize: 16,
-    marginBottom: 5,
-    color: "#000", // ✅ TEXT COLOR BLACK
+  leftIcon: {
+    marginRight: 10, // Left icon aur text ke beech ka space
   },
 
   error: {
@@ -254,12 +284,12 @@ const styles = StyleSheet.create({
   },
 
   btn: {
-    backgroundColor: "#17b3d6",
+    backgroundColor: "#80acdb",
     padding: 12,
     borderRadius: 10,
     alignItems: "center",
     marginTop: 10,
   },
 
-  btnText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  btnText: { color: "#000", fontSize: 15, fontWeight: "bold" },
 });

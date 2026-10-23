@@ -95,7 +95,7 @@ export default function TempScreen() {
       {/* 🔹 Header with Back Arrow and Title */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backIcon}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Temperature</Text>
       </View>
@@ -219,12 +219,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#3e98fa",
+    backgroundColor: "#80acdb",
     paddingVertical: 15,
     paddingHorizontal: 20,
   },
   backIcon: { marginRight: 10 },
-  headerTitle: { color: "#fff", fontSize: 20, fontWeight: "bold" },
+  headerTitle: { color: "#000", fontSize: 15, fontWeight: "bold" },
 
   card: {
     backgroundColor: "#f8f8f8",
